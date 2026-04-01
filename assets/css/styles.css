@@ -734,9 +734,10 @@ input.form-control:focus {
 
 /* Remove contorno durante skeleton */
 
-.skeleton#divNomeMeuPerfil, .skeleton#divSobrenomeMeuPerfil {
+#divNomeMeuPerfil.is-loading, #divSobrenomeMeuPerfil.is-loading, #divNomeMeuPerfil.is-loading input, #divSobrenomeMeuPerfil.is-loading input {
   border: none !important;
   box-shadow: none !important;
+  outline: none !important;
 }
 
 /* =========================

@@ -104,6 +104,33 @@ function setCipherActionLoadingState(isLoading) {
   });
 }
 
+function getDecryptFlowLoadingTargets() {
+  const ids = [
+    'skeletonHome',
+    'divLogoCifreiHome',
+    'btnMaisDecifrar',
+    'btnMaisCifrar',
+    'cifraAberta'
+  ];
+
+  return ids
+    .map((id) => document.getElementById(id))
+    .filter(Boolean);
+}
+
+function setDecryptFlowLoadingState(isLoading) {
+  const targets = getDecryptFlowLoadingTargets();
+
+  if (targets.length) {
+    targets.forEach((el) => {
+      el.classList.toggle('is-loading', !!isLoading);
+    });
+    return;
+  }
+
+  setCipherActionLoadingState(isLoading);
+}
+
 function nextAnimationFrame() {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
 }
@@ -990,7 +1017,7 @@ function setupFraseSegredoDecModal() {
       input.value = '';
       atualizarEstadoBotao();
       bsModal.hide();
-      setCipherActionLoadingState(true);
+      setDecryptFlowLoadingState(true);
       await nextAnimationFrame();
 
       const plaintext = await decrypt(ctx.ciphertext, ctx.key75, secret);
@@ -1023,7 +1050,7 @@ function setupFraseSegredoDecModal() {
       console.error('[Cifrei] Erro ao decifrar:', err);
       showDecryptErrorModal();
     } finally {
-      setCipherActionLoadingState(false);
+      setDecryptFlowLoadingState(false);
     }
   });
 }
