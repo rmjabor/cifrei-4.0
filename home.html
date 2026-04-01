@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html class="d-flex justify-content-center" data-bs-theme="light" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Cifrei</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <link rel="apple-touch-icon" type="image/png" sizes="180x180" href="assets/img/C_ifre_i_iOS.png">
+    <link rel="icon" type="image/png" sizes="180x180" href="assets/img/C_ifre_i_iOS.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/img/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="assets/img/icon-512.png">
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
+    <link rel="stylesheet" href="assets/css/Open%20Sans.css">
+    <link rel="stylesheet" href="assets/css/Roboto.css">
+    <link rel="stylesheet" href="assets/fonts/fontawesome-all.min.css">
+    <link rel="stylesheet" href="assets/fonts/line-awesome.min.css">
+    <link rel="stylesheet" href="assets/fonts/material-icons.min.css">
+    <link rel="stylesheet" href="assets/css/landing.css">
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+
+<body class="body-padrao" style="position: static;margin-top: 50px;width: 100%;padding-right: 20px;padding-left: 20px;" page="home">
+    <div class="modal fade" role="dialog" tabindex="-1" data-bs-backdrop="static" id="mdlNovosTermos" style="background: transparent;margin-top: 0px;" area-hiden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-confirma-excluir" role="document">
+            <div class="modal-content">
+                <div class="modal-header d-flex justify-content-center" style="background: #ffffff;border-radius: 0px 0px 0px 0px;border-style: none;border-top-left-radius: 10px;border-top-right-radius: 10px;"><img src="assets/img/Img_C_ifre_i.png" width="38" height="52"></div>
+                <div class="modal-body" style="background: #ffffff;padding: 0px;padding-top: 0px;height: auto;padding-right: 15px;padding-left: 15px;">
+                    <p id="txtConfirmExclConta" style="font-size: 14px;text-align: center;margin-bottom: 0px;font-family: 'Open Sans', sans-serif;min-width: 200px;max-width: 290px;margin-right: auto;margin-left: auto;line-height: 1.2;color: #383839;">Há novos Termos de Uso e Política de Privacidade. Você precisa concordar com eles para continuar a usar o app.</p>
+                    <p id="txtLerTermos" style="font-size: 13px;text-align: left;margin: 0px;margin-bottom: 0px;font-family: 'Open Sans', sans-serif;min-width: 200px;max-width: 290px;line-height: 1.2;color: red;padding-left: 6px;margin-top: 10px;"><strong><span style="text-decoration: underline; color: rgb(0, 41, 255);">Clique aqui</span></strong> <span style="color: rgb(66, 66, 66);">para ler os novos Termos.</span></p>
+                    <div id="legalDocument" style="margin-top: 10px;margin-bottom: 10px;">
+                        <div>
+                            <p id="legalTitle" style="font-size: 16px;font-weight: bold;"></p>
+                        </div>
+                        <div>
+                            <p id="legalVersion" style="font-weight: bold;"></p>
+                        </div>
+                        <div id="htmlLegalContent" style="height: 300px;"></div>
+                    </div>
+                </div>
+                <div class="modal-footer d-flex justify-content-center" style="background: #ffffff;border-bottom-right-radius: 10px;border-bottom-left-radius: 10px;border-style: none;padding-top: 12px;padding-bottom: 25px;padding-right: 15px;padding-left: 15px;"><button class="btn btn-primary btnPadrao" id="btnLiEConcordo" type="button" style="background: #673f85;font-family: 'Open Sans', sans-serif;box-shadow: 1px 1px 3px #a7a7a7, 1px 1px 3px #a7a7a7, 1px 1px 3px #a7a7a7;width: 100%;height: auto;" data-bs-dismiss="modal">Li e concordo com os novos Termos de Uso e Política de Privacidade</button>
+                    <div class="d-flex flex-row justify-content-center gap-3" style="width: 100%;"><button class="btn btnPadrao" id="btnSairNovosTermos" type="button" style="font-family: 'Open Sans', sans-serif;font-size: 16px;background: #fd641d;color: rgb(255,255,255);border-style: none;box-shadow: 1px 1px 3px #a7a7a7;width: 100%;">Sair</button></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" role="dialog" tabindex="-1" data-bs-backdrop="static" id="mdlHelp" style="background: transparent;margin-top: 0px;" area-hiden="true">
+        <div class="modal-dialog modal-confirma-excluir" role="document">
+            <div class="modal-content">
+                <div class="modal-header d-flex justify-content-center" style="background: #ffffff;border-radius: 0px 0px 0px 0px;border-style: none;border-top-left-radius: 10px;border-top-right-radius: 10px;"><img src="assets/img/Img_C_ifre_i.png" width="38" height="52"></div>
+                <div class="modal-body" style="background: #ffffff;padding: 0px;padding-top: 0px;height: auto;padding-right: 25px;padding-left: 25px;">
+                    <div id="htmlHelpContent" style="max-height: 320px;min-height: 50px;"></div>
+                </div>
+                <div class="modal-footer d-flex justify-content-center" style="background: #ffffff;border-bottom-right-radius: 10px;border-bottom-left-radius: 10px;border-style: none;padding-top: 12px;padding-bottom: 25px;padding-right: 25px;padding-left: 25px;"><button class="btn btnPadrao" id="btnEntendiHelp" type="button" style="font-family: 'Open Sans', sans-serif;font-size: 16px;background: #fd641d;color: rgb(255,255,255);border-style: none;box-shadow: 1px 1px 3px #a7a7a7;width: 100%;">Entendi</button></div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" role="dialog" tabindex="-1" data-bs-backdrop="static" id="mdlAvalia" style="background: transparent;margin-top: 0px;" area-hiden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-confirma-excluir" role="document">
+            <div class="modal-content">
+                <div class="modal-header d-flex justify-content-center" style="background: #ffffff;border-radius: 0px 0px 0px 0px;border-style: none;border-top-left-radius: 10px;border-top-right-radius: 10px;"><img src="assets/img/Img_C_ifre_i.png" width="38" height="52"></div>
+                <div class="modal-body" style="background: #ffffff;padding: 0px;padding-top: 0px;padding-right: 15px;padding-left: 15px;">
+                    <p class="fw-semibold" id="txtAvalia" style="font-size: 14px;text-align: center;margin-bottom: 0px;font-family: 'Open Sans', sans-serif;min-width: 200px;max-width: 290px;margin-right: auto;margin-left: auto;line-height: 1.2;color: #383839;">Como está sendo sua experiência com o app Cifrei?</p>
+                    <div class="d-flex justify-content-between" id="stars" style="margin-top: 20px;padding-right: 10px;padding-left: 10px;" data-nota-avalia="0"><i class="material-icons star-unselected" id="star1" style="width: 35px;height: 35px;font-size: 35px;" data-star-value="1">stars</i><i class="material-icons star-unselected" id="star2" style="width: 35px;height: 35px;font-size: 35px;" data-star-value="2">stars</i><i class="material-icons star-unselected" id="star3" style="width: 35px;height: 35px;font-size: 35px;" data-star-value="3">stars</i><i class="material-icons star-unselected" id="star4" style="width: 35px;height: 35px;font-size: 35px;" data-star-value="4">stars</i><i class="material-icons star-unselected" id="star5" style="width: 35px;height: 35px;font-size: 35px;" data-star-value="5">stars</i></div>
+                    <div class="d-flex justify-content-between" style="padding-right: 10px;padding-left: 10px;"><span style="font-size: 13px;color: #424242bd;">Péssima</span><span style="font-size: 13px;color: #424242bd;">Ótima</span></div>
+                    <div class="divInputPadrao" style="margin-top: 24px;"><textarea id="commentAvalia" class="inputPadrao" placeholder="Deixe aqui o seu comentário (opcional)" style="padding-left: 5px;height: 100px;"></textarea></div>
+                </div>
+                <div class="modal-footer d-flex justify-content-center" style="background: #ffffff;border-bottom-right-radius: 10px;border-bottom-left-radius: 10px;border-style: none;padding-top: 12px;padding-bottom: 25px;padding-right: 15px;padding-left: 15px;margin-top: 8px;">
+                    <div class="d-flex flex-row gap-3" style="width: 100%;"><button class="btn btnPadrao" id="btnMaisTardeAvalia" type="button" style="background: #673f85;font-family: 'Open Sans', sans-serif;width: 100%;box-shadow: 1px 1px 3px #a7a7a7;" data-bs-dismiss="modal"><svg class="bi bi-stopwatch" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8.5 5.6a.5.5 0 1 0-1 0v2.9h-3a.5.5 0 0 0 0 1H8a.5.5 0 0 0 .5-.5z"></path>
+                                <path d="M6.5 1A.5.5 0 0 1 7 .5h2a.5.5 0 0 1 0 1v.57c1.36.196 2.594.78 3.584 1.64l.012-.013.354-.354-.354-.353a.5.5 0 0 1 .707-.708l1.414 1.415a.5.5 0 1 1-.707.707l-.353-.354-.354.354-.013.012A7 7 0 1 1 7 2.071V1.5a.5.5 0 0 1-.5-.5M8 3a6 6 0 1 0 .001 12A6 6 0 0 0 8 3"></path>
+                            </svg>&nbsp;Mais tarde</button><button class="btn btnPadrao" id="btnEnviarAvalia" type="button" data-bs-dismiss="modal" style="font-family: 'Open Sans', sans-serif;font-size: 16px;background: #fd641d;color: rgb(255,255,255);width: 100%;border-style: none;box-shadow: 1px 1px 3px #a7a7a7;"><i class="la la-send" style="font-size: 16px;"></i>&nbsp;Enviar</button></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" role="dialog" tabindex="-1" data-bs-backdrop="static" id="informaErroDec" style="background: transparent;margin-top: 80px;" area-hiden="true">
+        <div class="modal-dialog modal-confirma-excluir" role="document" id="dlgErroDec">
+            <div class="modal-content">
+                <div class="modal-header d-flex justify-content-center" style="background: #ffffff;border-radius: 0px 0px 0px 0px;border-style: none;border-top-left-radius: 10px;border-top-right-radius: 10px;"><img src="assets/img/Img_C_ifre_i.png" width="38" height="52"></div>
+                <div class="modal-body" style="background: #ffffff;padding: 0px;padding-top: 0px;height: auto;padding-right: 24px;padding-left: 24px;">
+                    <p style="font-size: 14px;text-align: center;margin-bottom: 0px;font-family: 'Open Sans', sans-serif;margin-right: auto;margin-left: auto;line-height: 1.2;color: #383839;padding: 4px;">Não foi possível validar a decifragem. Verifique a frase segredo, a chave e o código.</p>
+                </div>
+                <div class="modal-footer d-flex justify-content-center" style="background: #ffffff;border-bottom-right-radius: 10px;border-bottom-left-radius: 10px;border-style: none;height: 80px;padding-top: 8px;padding-bottom: 16px;padding-right: 24px;padding-left: 24px;"><button class="btn btnPadrao" id="btnOk" type="button" data-bs-dismiss="modal" style="font-family: 'Open Sans', sans-serif;font-size: 16px;background: #fd641d;color: rgb(255,255,255);border-style: none;box-shadow: 1px 1px 3px #a7a7a7;margin: 0px;">Entendi</button></div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" role="dialog" tabindex="-1" data-bs-backdrop="static" id="fraseSegredoDec" style="background: transparent;margin-top: 50px;" rows="1">
+        <div class="modal-dialog mx-auto w-340" role="document">
+            <div class="modal-content">
+                <div class="modal-header d-flex justify-content-center" style="background: #ffffff;border-radius: 0px 0px 0px 0px;border-style: none;border-top-left-radius: 10px;border-top-right-radius: 10px;"><img src="assets/img/Img_C_ifre_i.png" width="38" height="52"></div>
+                <div class="modal-body" style="background: #ffffff;padding: 0px;padding-top: 0px;height: auto;">
+                    <p style="font-size: 13px;text-align: center;margin-bottom: 0px;font-family: 'Open Sans', sans-serif;width: 308px;min-width: 308px;max-width: 290px;margin-right: auto;margin-left: auto;line-height: 1.2;color: #212529;"><span style="color: rgb(75, 75, 75);">Digite sua&nbsp;frase segredo. Para recuperar o texto, você precisa fornecer a mesma frase e a mesma chave que você utilizou para cifrá-lo</span></p>
+                    <div class="d-flex container; caixa-texto;" id="divInputFraseSegredoDec" style="margin-top: 15px;margin-right: auto;background: transparent;margin-left: auto;max-width: 570px;min-width: 280px;padding: 0px;padding-right: 0px;padding-left: 0px;position: relative;border-radius: 8px;width: calc(100% - 30px);border: 1px none #fe6a25;"><textarea class="rounded-3 d-flex z-0 justify-content-start form-control mensagem fixedToContent" id="inputFraseSegredoDec" style="margin-left: 0px;width: 100%;max-width: 570px;min-width: 280px;font-family: 'Open Sans', sans-serif;font-size: 13px;padding: 0px;background: #f1f1f1;color: #1c1c1c;margin-top: 0px;padding-right: 8px;margin-right: 0px;padding-left: 8px;padding-top: 4px;padding-bottom: 4px;border: 1px solid #fd641d;" placeholder="Digite aqui sua frase segredo" spellcheck="false" autocomplete="off" rows="1"></textarea></div>
+                </div><span class="d-none" id="lblAvisoMultEspacFsegredoDec" style="font-size: 13px;font-family: 'Open Sans', sans-serif;color: #7a7979;border-radius: 6px;padding: 7px;margin-top: 20px;border: 1px solid #c9c9c9;margin-right: 15px;margin-left: 15px;"><strong><span style="color: rgb(235, 68, 68);">Cuidado:</span></strong>&nbsp;Sua frase segredo contém espaços consecutivos.</span>
+                <div class="modal-footer d-flex justify-content-center" style="background: #ffffff;border-bottom-right-radius: 10px;border-bottom-left-radius: 10px;border-style: none;height: 80px;padding-top: 8px;padding-bottom: 16px;margin-top: 11px;">
+                    <div class="d-flex flex-row gap-3" style="width: 100%;"><button class="btn btnPadrao" id="btnOkModalFraseSegredoDec" type="button" data-bs-dismiss="modal" style="font-family: 'Open Sans', sans-serif;font-size: 16px;background: #fd641d;color: rgb(255,255,255);width: 100%;border-style: none;box-shadow: 1px 1px 3px #a7a7a7;">OK</button><button class="btn btnPadrao" id="btnSairModalFraseSegredoDec" type="button" style="background: #673f85;font-family: 'Open Sans', sans-serif;width: 100%;box-shadow: 1px 1px 3px #a7a7a7;" data-bs-dismiss="modal">Sair</button></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" role="dialog" tabindex="-1" data-bs-backdrop="static" id="confirmaExcluirCifra" style="background: transparent;margin-top: 80px;" area-hiden="true">
+        <div class="modal-dialog modal-confirma-excluir" role="document" id="dlgConfirmaExcluirCifra">
+            <div class="modal-content">
+                <div class="modal-header d-flex justify-content-center" style="background: #ffffff;border-radius: 0px 0px 0px 0px;border-style: none;border-top-left-radius: 10px;border-top-right-radius: 10px;"><img src="assets/img/Img_C_ifre_i.png" width="38" height="52"></div>
+                <div class="modal-body" style="background: #ffffff;padding: 0px;padding-top: 0px;height: auto;padding-right: 24px;padding-left: 24px;">
+                    <p id="lblConfirmaExcluirCifra" style="font-size: 14px;text-align: center;margin-bottom: 0px;font-family: 'Open Sans', sans-serif;margin-right: auto;margin-left: auto;line-height: 1.2;color: #383839;"><span style="color: rgb(75, 75, 75);">Você tem certeza que deseja excluir esta cifra?</span></p>
+                </div>
+                <div class="modal-footer d-flex justify-content-center" style="background: #ffffff;border-bottom-right-radius: 10px;border-bottom-left-radius: 10px;border-style: none;height: 80px;padding-top: 8px;padding-bottom: 16px;padding-right: 24px;padding-left: 24px;">
+                    <div class="d-flex flex-row gap-3" style="width: 100%;"><button class="btn btnPadrao" id="btnOkExcluirCifra" type="button" data-bs-dismiss="modal" style="font-family: 'Open Sans', sans-serif;font-size: 16px;background: #fd641d;color: rgb(255,255,255);border-style: none;box-shadow: 1px 1px 3px #a7a7a7;width: 100%;">Sim</button><button class="btn btnPadrao" id="btnSairExcluirCifra" type="button" style="background: #673f85;font-family: 'Open Sans', sans-serif;width: 100%;box-shadow: 1px 1px 3px #a7a7a7;" data-bs-dismiss="modal">Não</button></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <header class="d-flex justify-content-center" style="margin-bottom: 30px;"><a href="index.html"><img class="img-fluid d-flex justify-content-center" width="806" height="418" src="assets/img/Logo-Cifrei.png" style="width: 138px;height: 71px;margin-right: auto;margin-left: auto;position: static;margin-top: 0px;"></a>
+        <div id="divLogoCifreiHome" class="7" style="width: fit-content;"></div>
+    </header>
+    <div id="skeletonHome" style="border-radius: 6px;">
+        <div id="divMinhasCifras">
+            <div class="d-flex align-items-end" style="margin-bottom: 15px;">
+                <p id="lblMinhasCifras" class="titulo-pagina" style="padding-left: 4px;color: #444444;font-family: 'Roboto';font-size: 22px;font-weight: bold;width: 100%;height: 32px;">Minhas cifras</p><i class="far fa-question-circle icnHelp" style="width: auto;margin-left: 5px;" data-help-key="minhas-cifras"></i>
+            </div>
+            <div class="overflow-y-auto" id="divListaCifra" style="max-height: 450px;padding-right: 3px;" type="text">
+                <div class="container d-none flex-row card.cifra" id="divTmpltCardCifra" style="min-width: 300px;max-width: 560px;margin-bottom: 8px;padding: 5px;background: #f4f4f4;border-radius: 8px;border-style: none;position: relative;display: flex;box-shadow: 1px 3px 4px 0px rgb(184,184,184);margin-left: 0px;">
+                    <div class="flex-column" id="divColunaEsqCardCifra" style="display: flex;padding-right: 8px;padding-left: 2px;">
+                        <div class="flex-row" id="divLinha1CardCifra" style="display: flex;margin-top: 0px;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 20 20" fill="none" style="min-width: 20px;max-width: 20px;color: #6a6a6a;height: 20px;">
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M6.62478 2.65458C7.6684 2.23213 8.80833 2 10 2C14.9706 2 19 6.02944 19 11C19 11.5523 18.5523 12 18 12C17.4477 12 17 11.5523 17 11C17 7.13401 13.866 4 10 4C9.06987 4 8.18446 4.18088 7.37522 4.50845C6.86328 4.71568 6.28029 4.46867 6.07306 3.95673C5.86584 3.4448 6.11285 2.8618 6.62478 2.65458ZM4.66173 4.95861C5.0758 5.32408 5.1152 5.95602 4.74974 6.37008C3.66007 7.60467 3 9.22404 3 11C3 11.5523 2.55228 12 2 12C1.44772 12 1 11.5523 1 11C1 8.71818 1.85048 6.63256 3.25026 5.04662C3.61573 4.63255 4.24766 4.59315 4.66173 4.95861Z" fill="currentColor"></path>
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M5 11C5 8.23858 7.23857 6 10 6C12.7614 6 15 8.23858 15 11C15 11.5523 14.5523 12 14 12C13.4477 12 13 11.5523 13 11C13 9.34315 11.6569 8 10 8C8.34315 8 7 9.34315 7 11C7 12.6772 6.65535 14.2764 6.03206 15.7288C5.81426 16.2363 5.22626 16.4712 4.71874 16.2533C4.21122 16.0355 3.97636 15.4475 4.19416 14.94C4.71247 13.7323 5 12.401 5 11ZM13.9212 13.0123C14.4666 13.0989 14.8387 13.6112 14.7521 14.1567C14.6205 14.9867 14.4378 15.7998 14.2072 16.5928C14.0531 17.1231 13.4982 17.428 12.9679 17.2739C12.4375 17.1197 12.1326 16.5648 12.2868 16.0345C12.494 15.3215 12.6584 14.5901 12.7768 13.8433C12.8634 13.2979 13.3757 12.9258 13.9212 13.0123Z" fill="currentColor"></path>
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M10 10C10.5523 10 11 10.4477 11 11C11 13.2363 10.5406 15.3679 9.71014 17.3036C9.49239 17.8111 8.90441 18.046 8.39687 17.8283C7.88933 17.6105 7.65441 17.0225 7.87217 16.515C8.59772 14.8239 9 12.9602 9 11C9 10.4477 9.44771 10 10 10Z" fill="currentColor"></path>
+                            </svg><input type="text" id="txtCardNomeCifra" style="font-size: 14px;padding-top: 0px;padding-bottom: 0px;background: transparent;height: 22px;border-width: 1px;border-style: none;padding-left: 4px;font-weight: bold;color: #1c1c1c;font-family: 'Open Sans', sans-serif;width: 100%;" readonly="readonly"></div>
+                        <div class="flex-row" id="divLinha2CardCifra" style="display: flex;margin-top: 3px;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 20 20" fill="none" style="min-width: 20px;max-width: 20px;color: #a2a2a2;height: 20px;">
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M18 8C18 11.3137 15.3137 14 12 14C11.3938 14 10.8087 13.9101 10.2571 13.7429L10 14L9 15L8 16H6V18H2V14L6.25707 9.74293C6.08989 9.19135 6 8.60617 6 8C6 4.68629 8.68629 2 12 2C15.3137 2 18 4.68629 18 8ZM12 4C11.4477 4 11 4.44772 11 5C11 5.55228 11.4477 6 12 6C13.1046 6 14 6.89543 14 8C14 8.55228 14.4477 9 15 9C15.5523 9 16 8.55228 16 8C16 5.79086 14.2091 4 12 4Z" fill="currentColor"></path>
+                            </svg><input type="text" id="txtCardChaveCifra" style="font-size: 13px;padding-top: 0px;padding-bottom: 0px;background: transparent;height: 22px;width: 100%;display: inline-flex;border-width: 1px;border-style: none;color: #292929;font-family: 'Open Sans', sans-serif;" readonly="readonly"></div>
+                        <div class="flex-row" id="divLinha3CardCifra" style="display: flex;margin-top: 3px;"><svg class="bi bi-file-earmark-lock-fill" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16" style="color: #a2a2a2;width: 20px;min-width: 20px;max-width: 20px;height: 20px;">
+                                <path d="M7 7a1 1 0 0 1 2 0v1H7zM6 9.3c0-.042.02-.107.105-.175A.64.64 0 0 1 6.5 9h3a.64.64 0 0 1 .395.125c.085.068.105.133.105.175v2.4c0 .042-.02.107-.105.175A.64.64 0 0 1 9.5 12h-3a.64.64 0 0 1-.395-.125C6.02 11.807 6 11.742 6 11.7z"></path>
+                                <path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.707 4L10 .293A1 1 0 0 0 9.293 0M9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1M10 7v1.076c.54.166 1 .597 1 1.224v2.4c0 .816-.781 1.3-1.5 1.3h-3c-.719 0-1.5-.484-1.5-1.3V9.3c0-.627.46-1.058 1-1.224V7a2 2 0 1 1 4 0"></path>
+                            </svg><input type="text" id="txtCardTextoCifra" style="font-size: 13px;padding-top: 0px;padding-bottom: 0px;background: transparent;height: 22px;width: 100%;border-width: 1px;border-style: none;color: #292929;font-family: 'Open Sans', sans-serif;" readonly="readonly"></div>
+                    </div>
+                    <div class="d-flex flex-column" id="divColunaDirCardCifra" style="top: 0px;position: relative;padding-top: 8px;padding-bottom: 8px;"><svg class="bottom-0 end-0 z-1 clickable icone-custom" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="1em" height="1em" fill="currentColor" id="icnCardEditarCifra" style="font-size: 19px;position: relative;height: 20px;color: #4b4b4b;width: 20px;margin-bottom: 16px;"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc. -->
+                            <path d="M441 58.9L453.1 71c9.4 9.4 9.4 24.6 0 33.9L424 134.1 377.9 88 407 58.9c9.4-9.4 24.6-9.4 33.9 0zM209.8 256.2L344 121.9 390.1 168 255.8 302.2c-2.9 2.9-6.5 5-10.4 6.1l-58.5 16.7 16.7-58.5c1.1-3.9 3.2-7.5 6.1-10.4zM373.1 25L175.8 222.2c-8.7 8.7-15 19.4-18.3 31.1l-28.6 100c-2.4 8.4-.1 17.4 6.1 23.6s15.2 8.5 23.6 6.1l100-28.6c11.8-3.4 22.5-9.7 31.1-18.3L487 138.9c28.1-28.1 28.1-73.7 0-101.8L474.9 25C446.8-3.1 401.2-3.1 373.1 25zM88 64C39.4 64 0 103.4 0 152L0 424c0 48.6 39.4 88 88 88l272 0c48.6 0 88-39.4 88-88l0-112c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 112c0 22.1-17.9 40-40 40L88 464c-22.1 0-40-17.9-40-40l0-272c0-22.1 17.9-40 40-40l112 0c13.3 0 24-10.7 24-24s-10.7-24-24-24L88 64z"></path>
+                        </svg><svg class="bottom-0 end-0 z-1 clickable icone-custom" xmlns="http://www.w3.org/2000/svg" viewBox="-32 0 512 512" width="1em" height="1em" fill="currentColor" id="icnCardApagarCifra" style="font-size: 19px;position: relative;width: 20px;height: 20px;color: #4b4b4b;"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc. -->
+                            <path d="M170.5 51.6L151.5 80l145 0-19-28.4c-1.5-2.2-4-3.6-6.7-3.6l-93.7 0c-2.7 0-5.2 1.3-6.7 3.6zm147-26.6L354.2 80 368 80l48 0 8 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-8 0 0 304c0 44.2-35.8 80-80 80l-224 0c-44.2 0-80-35.8-80-80l0-304-8 0c-13.3 0-24-10.7-24-24S10.7 80 24 80l8 0 48 0 13.8 0 36.7-55.1C140.9 9.4 158.4 0 177.1 0l93.7 0c18.7 0 36.2 9.4 46.6 24.9zM80 128l0 304c0 17.7 14.3 32 32 32l224 0c17.7 0 32-14.3 32-32l0-304L80 128zm80 64l0 208c0 8.8-7.2 16-16 16s-16-7.2-16-16l0-208c0-8.8 7.2-16 16-16s16 7.2 16 16zm80 0l0 208c0 8.8-7.2 16-16 16s-16-7.2-16-16l0-208c0-8.8 7.2-16 16-16s16 7.2 16 16zm80 0l0 208c0 8.8-7.2 16-16 16s-16-7.2-16-16l0-208c0-8.8 7.2-16 16-16s16 7.2 16 16z"></path>
+                        </svg></div>
+                </div>
+            </div>
+        </div>
+        <p class="d-none" id="labelSemCifras" style="font-size: 16px;color: #bfbfbf;font-family: Roboto, sans-serif;text-align: center;min-width: 310px;max-width: 570px;margin-right: auto;margin-left: auto;padding: 0px;margin-bottom: 0px;">Você ainda não salvou nenhuma cifra. Clique no botão '+ Cifrar' abaixo para criar uma.</p>
+    </div>
+    <div class="btn-group z-3 justify-content-center align-items-center gap-3" role="group" id="divBtnsCifrarDecifrar" style="position: fixed;display: flex;min-width: 230px;/*left: auto;*/right: 80px;bottom: 24px;width: 230px;"><button class="btn btn-primary botao-custom" id="btnMaisDecifrar" type="button" style="width: 110px;height: 45px;border-style: none;background: #673f85;padding-top: 4px;padding-right: 0px;padding-bottom: 3px;padding-left: 0px;box-shadow: 1px 1px 3px 0px #a7a7a7;font-family: 'Open Sans', sans-serif;font-size: 14px;border-radius: 25px;margin-left: 0px;">+ Decifrar&nbsp;<svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 24 24" width="1em" fill="currentColor" style="width: 20px;height: 20px;margin-bottom: 4px;">
+                <path d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z"></path>
+            </svg></button><button class="btn btn-primary text-center botao-custom" id="btnMaisCifrar" type="button" style="width: 110px;background: #fd641d;border-style: none;height: 45px;padding-right: 0px;padding-left: 0px;padding-top: 4px;padding-bottom: 3px;box-shadow: 1px 1px 3px 0px #a7a7a7;font-family: 'Open Sans', sans-serif;font-size: 14px;border-radius: 25px;">&nbsp;+ Cifrar&nbsp;<svg class="ms-0" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="1em" viewBox="0 0 24 24" width="1em" fill="currentColor" style="width: 20px;height: 20px;margin-bottom: 4px;">
+                <g>
+                    <rect fill="none" height="24" width="24" x="0"></rect>
+                </g>
+                <g>
+                    <g>
+                        <g>
+                            <path d="M12,17c1.1,0,2-0.9,2-2s-0.9-2-2-2s-2,0.9-2,2S10.9,17,12,17z M18,8h-1V6c0-2.76-2.24-5-5-5S7,3.24,7,6v2H6 c-1.1,0-2,0.9-2,2v10c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2V10C20,8.9,19.1,8,18,8z M8.9,6c0-1.71,1.39-3.1,3.1-3.1 s3.1,1.39,3.1,3.1v2H8.9V6z M18,20H6V10h12V20z"></path>
+                        </g>
+                    </g>
+                </g>
+            </svg></button></div>
+    <div class="d-flex justify-content-center align-items-center clickable btnMenu" id="btnMenuFlutuante" style="background: #525252;border-radius: 45px;box-shadow: 1px 1px 3px 0px #a7a7a7;"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 20 20" fill="none" style="width: 30px;height: 30px;color: #ffffff;">
+
+            <path d="M6 10C6 11.1046 5.10457 12 4 12C2.89543 12 2 11.1046 2 10C2 8.89543 2.89543 8 4 8C5.10457 8 6 8.89543 6 10Z" fill="currentColor"></path>
+            <path d="M12 10C12 11.1046 11.1046 12 10 12C8.89543 12 8 11.1046 8 10C8 8.89543 8.89543 8 10 8C11.1046 8 12 8.89543 12 10Z" fill="currentColor"></path>
+            <path d="M16 12C17.1046 12 18 11.1046 18 10C18 8.89543 17.1046 8 16 8C14.8954 8 14 8.89543 14 10C14 11.1046 14.8954 12 16 12Z" fill="currentColor"></path>
+        </svg></div>
+    <div class="d-none menuFlutuante" id="menuFlutuante" style="width: 200px;">
+        <div class="d-flex flex-row align-items-center menuLine" id="menuLineHome" style="position: relative;padding-left: 10px;border-bottom: 1px solid #b9b9b9;" to-page="home"><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 24 24" width="1em" fill="currentColor" style="width: 30px;height: 30px;">
+                <path d="M0 0h24v24H0V0z" fill="none"></path>
+                <path d="M12 5.69l5 4.5V18h-2v-6H9v6H7v-7.81l5-4.5M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"></path>
+            </svg><span style="width: 100%;font-family: 'Open Sans';padding-left: 5px;">Início</span></div>
+        <div class="d-flex flex-row align-items-center menuLine" id="menuLineCifrar" style="position: relative;padding-left: 10px;border-bottom: 1px solid #b9b9b9;" to-page="cifrar"><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 24 24" width="1em" fill="currentColor" style="width: 30px;height: 30px;">
+                <g fill="none">
+                    <path d="M0 0h24v24H0V0z"></path>
+                    <path d="M0 0h24v24H0V0z" opacity=".87"></path>
+                </g>
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"></path>
+            </svg><span style="width: 100%;font-family: 'Open Sans';padding-left: 5px;">Cifrar</span></div>
+        <div class="d-flex flex-row align-items-center menuLine" id="menuLineDecifrar" style="position: relative;padding-left: 10px;border-bottom: 1px solid #b9b9b9;" to-page="decifrar"><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 24 24" width="1em" fill="currentColor" style="width: 30px;height: 30px;">
+                <path d="M0 0h24v24H0V0z" fill="none"></path>
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h2c0-1.66 1.34-3 3-3s3 1.34 3 3v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"></path>
+            </svg><span style="width: 100%;font-family: 'Open Sans';padding-left: 5px;">Decifrar</span></div>
+        <div class="d-flex flex-row align-items-center menuLine" id="menuLineMeuperfil" style="position: relative;padding-left: 10px;border-bottom: 1px solid #b9b9b9;" to-page="meuperfil"><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 24 24" width="1em" fill="currentColor" style="width: 30px;height: 30px;">
+                <path d="M0 0h24v24H0V0z" fill="none"></path>
+                <path d="M12 5.9c1.16 0 2.1.94 2.1 2.1s-.94 2.1-2.1 2.1S9.9 9.16 9.9 8s.94-2.1 2.1-2.1m0 9c2.97 0 6.1 1.46 6.1 2.1v1.1H5.9V17c0-.64 3.13-2.1 6.1-2.1M12 4C9.79 4 8 5.79 8 8s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 9c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z"></path>
+            </svg><span style="width: 100%;font-family: 'Open Sans';padding-left: 5px;">Meu perfil</span></div>
+        <div class="d-flex flex-row align-items-center menuLine" id="menuLineTermosLegais" style="position: relative;padding-left: 10px;border-bottom: 1px solid #b9b9b9;" to-page="termos"><svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="1em" viewBox="0 0 24 24" width="1em" fill="currentColor" style="width: 30px;height: 30px;">
+                <g>
+                    <rect fill="none" height="24" width="24"></rect>
+                </g>
+                <g>
+                    <path d="M13,7.83c0.85-0.3,1.53-0.98,1.83-1.83H18l-3,7c0,1.66,1.57,3,3.5,3s3.5-1.34,3.5-3l-3-7h2V4h-6.17 C14.42,2.83,13.31,2,12,2S9.58,2.83,9.17,4L3,4v2h2l-3,7c0,1.66,1.57,3,3.5,3S9,14.66,9,13L6,6h3.17c0.3,0.85,0.98,1.53,1.83,1.83 V19H2v2h20v-2h-9V7.83z M20.37,13h-3.74l1.87-4.36L20.37,13z M7.37,13H3.63L5.5,8.64L7.37,13z M12,6c-0.55,0-1-0.45-1-1 c0-0.55,0.45-1,1-1s1,0.45,1,1C13,5.55,12.55,6,12,6z"></path>
+                </g>
+            </svg><span style="width: 100%;font-family: 'Open Sans';padding-left: 5px;">Termos legais</span></div>
+        <div class="d-flex flex-row align-items-center menuLine" id="menuLineSuporte" style="position: relative;padding-left: 9px;border-bottom: 1px solid #b9b9b9;" to-page="suporte"><i class="la la-support" style="width: 30px;height: 30px;font-size: 27px;padding-top: 2px;"></i><span style="width: 100%;font-family: 'Open Sans';padding-left: 6px;">Suporte</span></div>
+        <div class="d-flex flex-row align-items-center menuLine" id="menuLineLogout" style="position: relative;padding-left: 10px;border-bottom-width: 1px;border-bottom-style: none;" to-page="entrar"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" style="width: 30px;height: 30px;">
+                <path d="M17 16L21 12M21 12L17 8M21 12L7 12M13 16V17C13 18.6569 11.6569 20 10 20H6C4.34315 20 3 18.6569 3 17V7C3 5.34315 4.34315 4 6 4H10C11.6569 4 13 5.34315 13 7V8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg><span style="width: 100%;font-family: 'Open Sans';padding-left: 5px;">Sair do Cifrei</span></div>
+    </div>
+    <div class="d-none" id="overlayMenuFlutuante" style="width: 100%;height: 100%;"></div>
+    <script src="assets/bootstrap/js/bootstrap.min.js"></script>
+    <script src="assets/js/argon2-bundled.min.js"></script>
+    <script src="assets/js/cipherFunctions.js"></script>
+    <script src="assets/js/storage.js"></script>
+    <script src="assets/js/home.js"></script>
+    <script src="assets/js/qrcode.min.js"></script>
+    <script src="https://unpkg.com/jsqr/dist/jsQR.js"></script>
+    <script src="assets/js/uiBehaviour.js"></script>
+    <script src="assets/js/inputMask.js"></script>
+    <script src="assets/js/helpContent.js"></script>
+    <script src="assets/js/modal.js"></script>
+    <script src="assets/js/passwordGenerator.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="assets/js/supabaseClient.js"></script>
+    <script src="assets/js/legalDocumentsV2.js"></script>
+    <script src="assets/js/authPagesV2.js"></script>
+</body>
+
+</html>
