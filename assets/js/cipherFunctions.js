@@ -1,10 +1,11 @@
 // cipherFunctions.js
-// Cifrei 4.0 - Argon2id calibrado por tempo + teto global
+// Cifrei 4.1 - Argon2id calibrado por tempo + payload otimizado
 
 const CIFREI_KEY_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 const CIFREI_KEY_MIN_LENGTH = 8;
 const CIFREI_KEY_MAX_LENGTH = 25;
-const CIFREI_CODE_VERSION = 4;
+const CIFREI_CODE_VERSION = 5;
+const CIFREI_LEGACY_ARGON2_CODE_VERSION = 4;
 const CIFREI_GCM_IV_LENGTH = 12;
 const CIFREI_KDF_SALT_LENGTH = 16;
 const CIFREI_KDF_TIME_COST = 3;
@@ -16,6 +17,7 @@ const CIFREI_KDF_MAX_ACCEPTABLE_MS = 1500;
 const CIFREI_KDF_MEMORY_OPTIONS_KIB = [4096, 8192, 12288, 16384, 24576, 32768];
 const CIFREI_KDF_LOCALSTORAGE_KEY = 'cifrei.argon2.calibration.v4';
 const CIFREI_ARGON2_TYPE_ID = 2; // Argon2id
+const CIFREI_AAD = 'C4';
 
 function getCryptoObject() {
   return (
@@ -65,6 +67,8 @@ function bytesToBase64Url(bytes) {
 
 function base64UrlToBytes(base64url) {
   const normalized = String(base64url || '')
+    .trim()
+    .replace(/\s+/g, '')
     .replace(/-/g, '+')
     .replace(/_/g, '/');
 
@@ -120,7 +124,7 @@ function getArgon2Library() {
     return argon2;
   }
 
-  throw new Error('Biblioteca Argon2 indisponível. Verifique o carregamento do script assets/js/vendor/argon2.js ou do CDN configurado no projeto.');
+  throw new Error('Biblioteca Argon2 indisponível. Verifique o carregamento do script Argon2 configurado no projeto.');
 }
 
 function isValidCalibrationObject(value) {
@@ -154,6 +158,22 @@ function storeArgon2Calibration(calibration) {
   } catch (err) {
     console.warn('[Cifrei] Não foi possível gravar calibração Argon2 no localStorage:', err);
   }
+}
+
+function getMemoryIndexForKiB(memoryKiB) {
+  const index = CIFREI_KDF_MEMORY_OPTIONS_KIB.indexOf(memoryKiB);
+  if (index === -1) {
+    throw new Error('Parâmetro de memória Argon2 inválido para o formato otimizado.');
+  }
+  return index;
+}
+
+function getMemoryKiBForIndex(index) {
+  const memoryKiB = CIFREI_KDF_MEMORY_OPTIONS_KIB[index];
+  if (!memoryKiB) {
+    throw new Error('Código inválido: índice de memória Argon2 desconhecido.');
+  }
+  return memoryKiB;
 }
 
 async function runArgon2Hash(keyMaterialString, saltBytes, params) {
@@ -251,6 +271,19 @@ async function deriveAesKeyFromPassphraseAndKey(passphrase, chave, saltBytes, pa
   );
 }
 
+function packOptimizedHeader(memoryKiB) {
+  const memoryIndex = getMemoryIndexForKiB(memoryKiB) & 0x0f;
+  return ((CIFREI_CODE_VERSION & 0x0f) << 4) | memoryIndex;
+}
+
+function unpackVersionFromHeader(headerByte) {
+  return (headerByte >> 4) & 0x0f;
+}
+
+function unpackMemoryIndexFromHeader(headerByte) {
+  return headerByte & 0x0f;
+}
+
 async function encrypt(textoAberto, chave, passphrase) {
   const normalizedSecret = normalizeSecretInput(passphrase);
   const normalizedKey = sanitizeKeyInput(chave);
@@ -269,7 +302,7 @@ async function encrypt(textoAberto, chave, passphrase) {
     {
       name: 'AES-GCM',
       iv,
-      additionalData: enc.encode('C4'),
+      additionalData: enc.encode(CIFREI_AAD),
       tagLength: 128
     },
     aesKey,
@@ -277,15 +310,11 @@ async function encrypt(textoAberto, chave, passphrase) {
   );
 
   const cipherBytes = new Uint8Array(cipherBuffer);
-  const headerLength = 1 + 2 + 1 + 1 + salt.length + iv.length;
+  const headerLength = 1 + salt.length + iv.length;
   const payload = new Uint8Array(headerLength + cipherBytes.length);
 
   let offset = 0;
-  payload[offset++] = CIFREI_CODE_VERSION;
-  payload.set(encodeUint16(kdfParams.memoryKiB), offset);
-  offset += 2;
-  payload[offset++] = kdfParams.timeCost & 0xff;
-  payload[offset++] = kdfParams.parallelism & 0xff;
+  payload[offset++] = packOptimizedHeader(kdfParams.memoryKiB);
   payload.set(salt, offset);
   offset += salt.length;
   payload.set(iv, offset);
@@ -295,12 +324,46 @@ async function encrypt(textoAberto, chave, passphrase) {
   return bytesToBase64Url(payload);
 }
 
-function tryParseCompactCode(textoCifrado) {
-  const payload = base64UrlToBytes(String(textoCifrado || '').trim());
+function tryParseOptimizedCode(payload) {
+  const minimumLength = 1 + CIFREI_KDF_SALT_LENGTH + CIFREI_GCM_IV_LENGTH + 16;
+
+  if (payload.length < minimumLength) throw new Error('Código muito curto.');
+
+  const header = payload[0];
+  const version = unpackVersionFromHeader(header);
+
+  if (version !== CIFREI_CODE_VERSION) {
+    throw new Error('Formato otimizado incompatível.');
+  }
+
+  let offset = 1;
+  const salt = payload.slice(offset, offset + CIFREI_KDF_SALT_LENGTH);
+  offset += CIFREI_KDF_SALT_LENGTH;
+  const iv = payload.slice(offset, offset + CIFREI_GCM_IV_LENGTH);
+  offset += CIFREI_GCM_IV_LENGTH;
+  const ciphertext = payload.slice(offset);
+
+  if (!ciphertext.length) {
+    throw new Error('Código inválido.');
+  }
+
+  return {
+    params: {
+      memoryKiB: getMemoryKiBForIndex(unpackMemoryIndexFromHeader(header)),
+      timeCost: CIFREI_KDF_TIME_COST,
+      parallelism: CIFREI_KDF_PARALLELISM
+    },
+    salt,
+    iv,
+    ciphertext
+  };
+}
+
+function tryParseLegacyArgon2Code(payload) {
   const minimumLength = 1 + 2 + 1 + 1 + CIFREI_KDF_SALT_LENGTH + CIFREI_GCM_IV_LENGTH + 16;
 
   if (payload.length < minimumLength) throw new Error('Código muito curto.');
-  if (payload[0] !== CIFREI_CODE_VERSION) throw new Error('Versão de código incompatível.');
+  if (payload[0] !== CIFREI_LEGACY_ARGON2_CODE_VERSION) throw new Error('Versão de código incompatível.');
 
   let offset = 1;
   const memoryKiB = decodeUint16(payload, offset);
@@ -329,6 +392,20 @@ function tryParseCompactCode(textoCifrado) {
   };
 }
 
+function parseCode(textoCifrado) {
+  const payload = base64UrlToBytes(textoCifrado);
+
+  try {
+    return tryParseOptimizedCode(payload);
+  } catch (optimizedError) {
+    try {
+      return tryParseLegacyArgon2Code(payload);
+    } catch (legacyError) {
+      throw optimizedError;
+    }
+  }
+}
+
 async function decrypt(textoCifrado, chave, passphrase) {
   const normalizedSecret = normalizeSecretInput(passphrase);
   const normalizedKey = sanitizeKeyInput(chave);
@@ -336,13 +413,13 @@ async function decrypt(textoCifrado, chave, passphrase) {
   if (!normalizedSecret) throw new Error('Frase segredo inválida ou vazia.');
   if (!isValidKey(normalizedKey)) throw new Error('Chave inválida.');
 
-  const parsed = tryParseCompactCode(textoCifrado);
+  const parsed = parseCode(textoCifrado);
   const aesKey = await deriveAesKeyFromPassphraseAndKey(normalizedSecret, normalizedKey, parsed.salt, parsed.params);
   const subtle = getSubtleCrypto();
   const enc = new TextEncoder();
 
   const plainBuffer = await subtle.decrypt(
-    { name: 'AES-GCM', iv: parsed.iv, additionalData: enc.encode('C4'), tagLength: 128 },
+    { name: 'AES-GCM', iv: parsed.iv, additionalData: enc.encode(CIFREI_AAD), tagLength: 128 },
     aesKey,
     parsed.ciphertext
   );
