@@ -80,6 +80,34 @@ function animarTextarea(element) {
   flashContainer(element);
 }
 
+
+function getCipherActionLoadingTargets() {
+  const ids = [
+    'tituloPageTop',
+    'radioCifragem',
+    'tituloDecPageTop',
+    'radioDecifragem',
+    'divChave',
+    'divMsgEntrada',
+    'btnCifrar',
+    'btnDecifrar'
+  ];
+
+  return ids
+    .map((id) => document.getElementById(id))
+    .filter(Boolean);
+}
+
+function setCipherActionLoadingState(isLoading) {
+  getCipherActionLoadingTargets().forEach((el) => {
+    el.classList.toggle('is-loading', !!isLoading);
+  });
+}
+
+function nextAnimationFrame() {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
 function isAsciiPrintableChar(ch) {
   if (!ch) return false;
   const code = ch.charCodeAt(0);
@@ -841,6 +869,12 @@ function setupFraseSegredoModal() {
     }
 
     try {
+      campoPass.value = '';
+      campoPass.dispatchEvent(new Event('input'));
+      bsModal.hide();
+      setCipherActionLoadingState(true);
+      await nextAnimationFrame();
+
       console.log('[Cifrei] Chamando encrypt()...');
       const textoCifrado = await encrypt(textoAberto, chave, passphrase);
 
@@ -863,13 +897,11 @@ function setupFraseSegredoModal() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
 
-      campoPass.value = '';
-      campoPass.dispatchEvent(new Event('input'));
-      bsModal.hide();
-
       console.log('[Cifrei] Fluxo de cifragem concluído com sucesso.');
     } catch (err) {
       console.error('[Cifrei] Erro ao cifrar:', err);
+    } finally {
+      setCipherActionLoadingState(false);
     }
   });
 
@@ -955,6 +987,12 @@ function setupFraseSegredoDecModal() {
     }
 
     try {
+      input.value = '';
+      atualizarEstadoBotao();
+      bsModal.hide();
+      setCipherActionLoadingState(true);
+      await nextAnimationFrame();
+
       const plaintext = await decrypt(ctx.ciphertext, ctx.key75, secret);
 
       // monta o pacote para a página cifraaberta.html
@@ -976,20 +1014,16 @@ function setupFraseSegredoDecModal() {
         }
       }
 
-      // limpa contexto e modal
+      // limpa contexto
       window.cifreiDecifragemContext = null;
-      input.value = '';
-      atualizarEstadoBotao();
-      bsModal.hide();
 
       // navega para a página de exibição
       window.location.href = 'cifraaberta.html';
     } catch (err) {
       console.error('[Cifrei] Erro ao decifrar:', err);
-      input.value = '';
-      atualizarEstadoBotao();
-      bsModal.hide();
       showDecryptErrorModal();
+    } finally {
+      setCipherActionLoadingState(false);
     }
   });
 }

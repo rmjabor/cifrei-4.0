@@ -739,6 +739,56 @@ input.form-control:focus {
   box-shadow: none !important;
 }
 
+/* =========================
+   Skeleton — cifrar.html / decifrar.html
+========================= */
+
+#tituloPageTop.is-loading, #radioCifragem.is-loading, #tituloDecPageTop.is-loading, #radioDecifragem.is-loading, #divChave.is-loading, #divMsgEntrada.is-loading, #btnCifrar.is-loading, #btnDecifrar.is-loading {
+  pointer-events: none !important;
+}
+
+#tituloPageTop.is-loading, #radioCifragem.is-loading, #tituloDecPageTop.is-loading, #radioDecifragem.is-loading, #divChave.is-loading, #divMsgEntrada.is-loading, #btnCifrar.is-loading, #btnDecifrar.is-loading {
+  position: relative !important;
+  overflow: hidden !important;
+  background: linear-gradient(90deg, #dddddd 25%, #efefef 50%, #dddddd 75%) !important;
+  background-size: 200% 100% !important;
+  animation: cifreiSkeletonBgShift 1.25s linear infinite !important;
+}
+
+#tituloPageTop.is-loading, #radioCifragem.is-loading, #tituloDecPageTop.is-loading, #radioDecifragem.is-loading {
+  border-color: transparent !important;
+}
+
+#divChave.is-loading, #divMsgEntrada.is-loading {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+#btnCifrar.is-loading, #btnDecifrar.is-loading {
+  box-shadow: none !important;
+  color: transparent !important;
+  filter: none !important;
+}
+
+#tituloPageTop.is-loading *, #radioCifragem.is-loading *, #tituloDecPageTop.is-loading *, #radioDecifragem.is-loading *, #divChave.is-loading *, #divMsgEntrada.is-loading *, #btnCifrar.is-loading *, #btnDecifrar.is-loading * {
+  color: transparent !important;
+  fill: transparent !important;
+  opacity: 0 !important;
+  border-color: transparent !important;
+  caret-color: transparent !important;
+  text-shadow: none !important;
+}
+
+#divChave.is-loading input, #divMsgEntrada.is-loading textarea {
+  background: transparent !important;
+  color: transparent !important;
+  caret-color: transparent !important;
+}
+
+#divChave.is-loading input::placeholder, #divMsgEntrada.is-loading textarea::placeholder {
+  color: transparent !important;
+}
+
 /* Estilos do Custom Code das páginas Suporte e Termos */
 
 :root {
