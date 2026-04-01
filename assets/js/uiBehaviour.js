@@ -841,7 +841,6 @@ function setupFraseSegredoModal() {
     }
 
     try {
-      alert("argon2 = " + typeof argon2); //Teste teste teste
       console.log('[Cifrei] Chamando encrypt()...');
       const textoCifrado = await encrypt(textoAberto, chave, passphrase);
 
