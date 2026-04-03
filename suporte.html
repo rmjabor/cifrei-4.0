@@ -469,6 +469,7 @@ Sem a combinação correta desses elementos, não é possível reconstruir o con
     </section>
     <section class="chapter" id="cap-10">
       <h1><strong>Como o Cifrei protege suas informações</strong></h1>
+<p><a href="assets/doc/NotaTecnicaCifrei4_0.pdf" target="_blank" rel="noopener noreferrer">Clique aqui</a> para baixar a nota técnica.</p>
 <p>O Cifrei utiliza um processo criptográfico moderno para proteger suas mensagens, baseado em padrões amplamente utilizados em aplicações de segurança.</p>
 <p>De forma simples, o aplicativo transforma sua mensagem em um código protegido a partir da combinação de três elementos:</p>
 <ul>
@@ -479,7 +480,7 @@ Sem a combinação correta desses elementos, não é possível reconstruir o con
 <p class="divider">________________________________________</p>
 <h2>🔑 <strong>Transformação da chave e da frase segredo</strong></h2>
 <p>Antes de proteger a mensagem, o Cifrei combina a chave e a frase segredo em um processo matemático que gera uma chave criptográfica forte.</p>
-<p>Esse processo é feito por meio de um método chamado PBKDF2, que aplica múltiplas transformações sucessivas (310.000 vezes), utiliza elementos aleatórios próprios de cada cifra e gera uma chave robusta, adequada para criptografia moderna. </p>
+<p>Esse processo é feito por meio de um método chamado Argon2id, que aplica múltiplas transformações sucessivas, utiliza elementos aleatórios próprios de cada cifra e gera uma chave robusta, adequada para criptografia moderna. </p>
 <p>Na prática, isso significa que, mesmo que a chave e a frase segredo sejam simples, o sistema as transforma em uma estrutura muito mais resistente a tentativas de quebra.</p>
 <div class="spacer"></div>
 <h2><strong>🔒</strong><strong> Criptografia da mensagem</strong></h2>
@@ -489,7 +490,7 @@ Sem a combinação correta desses elementos, não é possível reconstruir o con
 <ul>
 <li>O algoritmo <strong>AES (Advanced Encryption Standard)</strong>, padronizado pelo National Institute of Standards and Technology (NIST) no documento oficial FIPS 197, utilizado globalmente em sistemas de segurança, comunicações e armazenamento de dados. </li>
 <li>O modo de operação <strong>GCM (Galois/Counter Mode)</strong>, definido pelo NIST (SP 800-38D), que adiciona verificação de integridade à criptografia, permitindo detectar qualquer alteração indevida nos dados. </li>
-<li>O método de derivação de chave <strong>PBKDF2</strong>, especificado no padrão internacional RFC 8018 (PKCS #5) e recomendado pelo NIST (SP 800-132), utilizado para transformar senhas humanas em chaves criptográficas seguras. </li>
+<li>O Cifrei utiliza o <strong>Argon2id</strong> como método de derivação de chave. Descrito no RFC 9106, o Argon2id é um algoritmo projetado para transformar entradas humanas, como senhas e frases segredo, em chaves criptográficas fortes. Seu diferencial está em exigir não apenas tempo de cálculo, mas também uso relevante de memória, o que dificulta ataques em larga escala com placas gráficas e equipamentos especializados. Por isso, ele é hoje amplamente visto como uma das escolhas mais modernas para esse tipo de aplicação, sendo inclusive a opção preferencial indicada pela OWASP. </li>
 </ul>
 <p>Esses padrões são utilizados em diversas aplicações críticas, como:</p>
 <ul>
