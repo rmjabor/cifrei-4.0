@@ -870,6 +870,38 @@ html {
   border-bottom-style: solid;
 }
 
+#legalDocContent .toc {
+  margin: 0 0 26px 0;
+  padding: 16px 16px 8px 16px;
+  border: 1px solid rgba(9,23,71,.12);
+  border-radius: 12px;
+  background: rgba(9,23,71,.03);
+}
+
+#legalDocContent .toc-title {
+  margin: 0 0 10px 0;
+  font-size: 18px;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+#legalDocContent .toc ol {
+  margin: 0 0 8px 22px;
+  padding: 0;
+  font-size: 14px;
+  line-height: 2;
+}
+
+#legalDocContent .toc a {
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px dotted rgba(9,23,71,.35);
+}
+
+#legalDocContent .toc a:hover {
+  border-bottom-style: solid;
+}
+
 .suporte-scope section.chapter, #legalDocContent section.chapter {
   margin: 0 0 28px 0;
   padding: 0 0 8px 0;
