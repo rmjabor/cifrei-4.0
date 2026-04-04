@@ -2289,29 +2289,16 @@ function handleQrDecoded(qrText) {
         return;
     }
 
-    // Valida prefixo CIFREI
-    if (!qrText.startsWith('CIFREI|')) {
-        console.warn('[Cifrei] QR não começa com CIFREI.');
+    const parsedPayload = parseCifreiPayload(qrText, { allowKeyOnly: true });
+
+    if (!parsedPayload) {
+        console.warn('[Cifrei] Estrutura do QR inesperada ou inválida.');
         showQrInvalidMessage();
         return;
     }
 
-    const partes = qrText.split('|');
-    // Esperado: ["CIFREI", "<chave>", "<código opcional>"]
-    if (partes.length < 2) {
-        console.warn('[Cifrei] Estrutura do QR inesperada:', partes);
-        showQrInvalidMessage();
-        return;
-    }
-
-    const chave = partes[1] || '';
-    const ciphertext = partes[2] || '';
-
-    if (typeof isValidKey === 'function' && !isValidKey(chave)) {
-        console.warn('[Cifrei] Chave com formato inesperado:', chave);
-        showQrInvalidMessage();
-        return;
-    }
+    const chave = parsedPayload.key || '';
+    const ciphertext = parsedPayload.ciphertext || '';
 
     // Agora preenche os campos de acordo com a página
     const txtChave = document.getElementById('txtChave');
@@ -2391,7 +2378,7 @@ function showQrInvalidMessage() {
     }
 }
 
-// ====== CLIPBOARD / CIFREI: detecção de chave/cifra ======
+// ====== CLIPBOARD / CIFREI: detecção de cifra completa ======
 
 function isCifreiKey(str) {
   const candidate = String(str || '').trim();
@@ -2448,55 +2435,55 @@ function isPlausibleCifreiCiphertext(str) {
   }
 }
 
-/**
- * Detecta se o texto do clipboard contém:
- * - uma chave Cifrei pura (8 a 25 chars Base64URL)
- * - ou um payload CIFREI|<key> ou CIFREI|<key>|<ciphertext>
- *
- * Retorna:
- *   null se não for nada Cifrei
- *   { type: 'chave' | 'cifra-completa', key, ciphertext }
- */
-function detectCifreiFromClipboard(rawText) {
+function parseCifreiPayload(rawText, options) {
   if (!rawText) return null;
 
-  const text = rawText.trim();
+  const opts = options || {};
+  const allowKeyOnly = opts.allowKeyOnly === true;
+
+  const text = String(rawText).trim();
   if (!text) return null;
 
-  // 1) Formato CIFREI|key|ciphertext (ou só CIFREI|key)
-  if (text.startsWith('CIFREI|')) {
-    const parts = text.split('|');
+  const parts = text.split('|');
+  if (parts.length < 2) return null;
 
-    if (parts.length >= 2) {
-      const key = parts[1];
+  const prefix = String(parts[0] || '').trim().toLowerCase();
+  if (prefix !== 'cifrei') return null;
 
-      if (isCifreiKey(key)) {
-        let ciphertext = '';
+  const key = String(parts[1] || '').trim();
+  const ciphertext = parts.slice(2).join('|').trim();
 
-        if (parts.length >= 3) {
-          // Junta o resto, caso o ciphertext contenha '|'
-          ciphertext = parts.slice(2).join('|');
-        }
+  if (!isCifreiKey(key)) return null;
 
-        if (ciphertext && ciphertext.trim() !== '') {
-          if (!isPlausibleCifreiCiphertext(ciphertext)) {
-            return null;
-          }
+  if (!ciphertext) {
+    if (!allowKeyOnly) return null;
 
-          return { type: 'cifra-completa', key, ciphertext };
-        } else {
-          return { type: 'chave', key, ciphertext: '' };
-        }
-      }
-    }
+    return {
+      type: 'chave',
+      key,
+      ciphertext: '',
+      rawText: text
+    };
   }
 
-  // 2) Chave pura (8 a 25 chars Base64URL)
-  if (isCifreiKey(text)) {
-    return { type: 'chave', key: text, ciphertext: '' };
-  }
+  if (!isPlausibleCifreiCiphertext(ciphertext)) return null;
 
-  return null;
+  return {
+    type: 'cifra-completa',
+    key,
+    ciphertext,
+    rawText: text
+  };
+}
+
+/**
+ * Detecta se o texto do clipboard contém uma cifra completa no formato
+ * Cifrei|<key>|<ciphertext> (aceitando maiúsculas/minúsculas no prefixo).
+ *
+ * Não reconhece mais chave isolada no clipboard.
+ */
+function detectCifreiFromClipboard(rawText) {
+  return parseCifreiPayload(rawText);
 }
 
 // ====== CLIPBOARD: lembrar apenas o último texto perguntado ======
@@ -2612,12 +2599,9 @@ function applyClipboardCifreiAction(action) {
   if (typeof info.ciphertext === 'string' && info.ciphertext.trim()) {
     ciphertext = info.ciphertext.trim();
   } else if (typeof rawText === 'string') {
-    const text = rawText.trim();
-    if (text.startsWith('CIFREI|')) {
-      const parts = text.split('|');
-      if (parts.length >= 3) {
-        ciphertext = parts.slice(2).join('|').trim();
-      }
+    const parsedPayload = parseCifreiPayload(rawText);
+    if (parsedPayload && parsedPayload.ciphertext) {
+      ciphertext = parsedPayload.ciphertext;
     }
   }
 
