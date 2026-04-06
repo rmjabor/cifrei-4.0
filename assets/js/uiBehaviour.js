@@ -2641,12 +2641,56 @@ function applyClipboardCifreiAction(action) {
 
 // ====== CLIPBOARD: integração com cifrar.html e decifrar.html ======
 
-function initClipboardWatcherForPage() {
-  if (!navigator.clipboard || !navigator.clipboard.readText) {
-    console.warn('[Cifrei] navigator.clipboard.readText não disponível.');
-    return;
+function setClipboardPasteButtonState(button, isEnabled) {
+  if (!button) return;
+
+  button.disabled = !isEnabled;
+  button.setAttribute('aria-disabled', isEnabled ? 'false' : 'true');
+  button.style.opacity = isEnabled ? '1' : '0.6';
+  button.style.cursor = isEnabled ? 'pointer' : 'not-allowed';
+}
+
+async function tryReadClipboardText() {
+  if (!navigator.clipboard || typeof navigator.clipboard.readText !== 'function') {
+    return '';
   }
 
+  try {
+    return await navigator.clipboard.readText();
+  } catch (err) {
+    console.warn('[Cifrei] Não foi possível ler a área de transferência:', err);
+    return '';
+  }
+}
+
+function fillCifrarKeyFromClipboardInfo(info) {
+  const campoChave = document.getElementById('txtChave');
+  if (!campoChave || !info || !info.key) return false;
+
+  campoChave.value = info.key;
+  campoChave.dispatchEvent(new Event('input', { bubbles: true }));
+  campoChave.dispatchEvent(new Event('change', { bubbles: true }));
+  flashContainer(campoChave);
+  return true;
+}
+
+function fillDecifrarFieldsFromClipboardInfo(info) {
+  const campoChave = document.getElementById('txtChave');
+  const campoMsg = document.getElementById('txtMsgEntrada');
+  if (!campoChave || !campoMsg || !info || !info.key || !info.ciphertext) return false;
+
+  campoChave.value = info.key;
+  campoMsg.value = info.ciphertext;
+  campoChave.dispatchEvent(new Event('input', { bubbles: true }));
+  campoChave.dispatchEvent(new Event('change', { bubbles: true }));
+  campoMsg.dispatchEvent(new Event('input', { bubbles: true }));
+  campoMsg.dispatchEvent(new Event('change', { bubbles: true }));
+  flashContainer(campoChave);
+  flashContainer(campoMsg);
+  return true;
+}
+
+function initClipboardWatcherForPage() {
   const path = (window.location && window.location.pathname) ? window.location.pathname : '';
 
   let pageType = null;
@@ -2661,9 +2705,7 @@ function initClipboardWatcherForPage() {
     pageType = 'decifrar';
   }
 
-  if (!pageType) {
-    return;
-  }
+  if (!pageType) return;
 
   if (document.body && document.body.dataset.cifreiClipboardWatcherBound === '1') {
     return;
@@ -2673,106 +2715,98 @@ function initClipboardWatcherForPage() {
     document.body.dataset.cifreiClipboardWatcherBound = '1';
   }
 
-  let isReadingClipboard = false;
-  let watcherActive = true;
-  let lastAttemptAt = 0;
+  if (pageType === 'cifrar') {
+    const campoChave = document.getElementById('txtChave');
+    if (!campoChave) return;
 
-  function detachWatcher() {
-    watcherActive = false;
-    document.removeEventListener('pointerup', handleUserGesture, true);
-    document.removeEventListener('click', handleUserGesture, true);
-    document.removeEventListener('keydown', handleUserGesture, true);
+    campoChave.addEventListener('paste', function (event) {
+      const pastedText = event.clipboardData && typeof event.clipboardData.getData === 'function'
+        ? event.clipboardData.getData('text/plain')
+        : '';
+      const info = detectCifreiFromClipboard(pastedText);
+
+      if (!info || !info.key) {
+        return;
+      }
+
+      event.preventDefault();
+      fillCifrarKeyFromClipboardInfo(info);
+    });
+
+    return;
   }
 
-  function pageAlreadyHasRelevantData() {
-    if (pageType === 'cifrar') {
-      const campoChave = document.getElementById('txtChave');
-      return !!(campoChave && campoChave.value && campoChave.value.trim() !== '');
-    }
+  const campoChave = document.getElementById('txtChave');
+  const campoMsg = document.getElementById('txtMsgEntrada');
+  const btnPasteClipboard = document.getElementById('btnPasteClipboard');
+  const radios = Array.from(document.querySelectorAll('input[name="origem-chave"]'));
 
-    if (pageType === 'decifrar') {
-      const campoChave = document.getElementById('txtChave');
-      const campoMsg = document.getElementById('txtMsgEntrada');
-      return !!(
-        campoChave && campoMsg &&
-        campoChave.value && campoChave.value.trim() !== '' &&
-        campoMsg.value && campoMsg.value.trim() !== ''
-      );
-    }
+  if (!campoChave || !campoMsg) return;
 
-    return false;
-  }
+  function handleDecifrarPaste(event) {
+    const pastedText = event.clipboardData && typeof event.clipboardData.getData === 'function'
+      ? event.clipboardData.getData('text/plain')
+      : '';
+    const info = detectCifreiFromClipboard(pastedText);
 
-  async function handleUserGesture(event) {
-    if (!watcherActive || isReadingClipboard) return;
-
-    const now = Date.now();
-    if (now - lastAttemptAt < 250) return;
-    lastAttemptAt = now;
-
-    if (pageAlreadyHasRelevantData()) {
-      detachWatcher();
+    if (!info || !info.key || !info.ciphertext) {
       return;
     }
 
-    isReadingClipboard = true;
+    event.preventDefault();
+    fillDecifrarFieldsFromClipboardInfo(info);
+  }
+
+  campoChave.addEventListener('paste', handleDecifrarPaste);
+  campoMsg.addEventListener('paste', handleDecifrarPaste);
+
+  if (!btnPasteClipboard) return;
+
+  let isCheckingClipboardButton = false;
+  setClipboardPasteButtonState(btnPasteClipboard, false);
+
+  async function refreshPasteButtonState() {
+    if (isCheckingClipboardButton) return;
+    isCheckingClipboardButton = true;
 
     try {
-      console.log('[Cifrei] Tentando ler o clipboard após gesto do usuário...', event && event.type ? event.type : '(sem tipo)');
-      const text = await navigator.clipboard.readText();
-      console.log('[Cifrei] Texto lido do clipboard:', text);
-
-      if (!text || !text.trim()) {
-        return;
-      }
-
-      const lastAsked = getLastClipboardAsked();
-      if (lastAsked && lastAsked === text) {
-        detachWatcher();
-        return;
-      }
-
+      const text = await tryReadClipboardText();
       const info = detectCifreiFromClipboard(text);
-      if (!info) {
-        setLastClipboardAsked('');
-        return;
-      }
-
-      if (pageAlreadyHasRelevantData()) {
-        setLastClipboardAsked(text);
-        detachWatcher();
-        return;
-      }
-
-      const modalEl = document.getElementById('confirmaUsarCifra');
-      if (!modalEl || !window.bootstrap || !bootstrap.Modal) {
-        console.warn('[Cifrei] Modal de confirmação do clipboard não encontrado. Aplicando diretamente.');
-        applyClipboardCifreiAction({ pageType, info, rawText: text });
-        setLastClipboardAsked(text);
-        detachWatcher();
-        return;
-      }
-
-      cifreiClipboardPendingAction = {
-        pageType,
-        info,
-        rawText: text
-      };
-
-      const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
-      bsModal.show();
-      detachWatcher();
-    } catch (err) {
-      console.warn('[Cifrei] Não foi possível ler a área de transferência:', err);
+      setClipboardPasteButtonState(btnPasteClipboard, !!(info && info.key && info.ciphertext));
     } finally {
-      isReadingClipboard = false;
+      isCheckingClipboardButton = false;
     }
   }
 
-  // Alguns navegadores só liberam clipboard em click; outros aceitam pointerup/keydown.
-  document.addEventListener('pointerup', handleUserGesture, true);
-  document.addEventListener('click', handleUserGesture, true);
-  document.addEventListener('keydown', handleUserGesture, true);
+  btnPasteClipboard.addEventListener('click', async function (event) {
+    event.preventDefault();
+
+    const text = await tryReadClipboardText();
+    const info = detectCifreiFromClipboard(text);
+
+    if (!info || !info.key || !info.ciphertext) {
+      setClipboardPasteButtonState(btnPasteClipboard, false);
+      return;
+    }
+
+    fillDecifrarFieldsFromClipboardInfo(info);
+    setClipboardPasteButtonState(btnPasteClipboard, true);
+  });
+
+  radios.forEach(function (radio) {
+    radio.addEventListener('change', function () {
+      refreshPasteButtonState();
+    });
+  });
+
+  campoChave.addEventListener('focus', refreshPasteButtonState);
+  campoMsg.addEventListener('focus', refreshPasteButtonState);
+  window.addEventListener('focus', refreshPasteButtonState);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') {
+      refreshPasteButtonState();
+    }
+  });
 }
 
 function setupPasswordGeneratorModal() {
