@@ -2394,15 +2394,7 @@ function showQrInvalidMessage() {
 // ====== CLIPBOARD / CIFREI: detecção de chave/cifra ======
 
 function isCifreiKey(str) {
-  const candidate = String(str || '').trim();
-
-  if (typeof isValidKey === 'function') return isValidKey(candidate);
-
-  return (
-    candidate.length >= 8 &&
-    candidate.length <= 25 &&
-    /^[A-Za-z0-9_-]+$/.test(candidate)
-  );
+  return !!String(str || '');
 }
 
 function isPlausibleCifreiCiphertext(str) {
@@ -2470,14 +2462,11 @@ function detectCifreiFromClipboard(rawText) {
     return null;
   }
 
-  const key = (parts[1] || '').trim();
-  const ciphertext = parts.slice(2).join('|').trim();
-
-  if (!isCifreiKey(key) || !ciphertext || !isPlausibleCifreiCiphertext(ciphertext)) {
-    return null;
-  }
-
-  return { type: 'cifra-completa', key, ciphertext };
+  return {
+    type: 'cifra-completa',
+    key: parts[1] || '',
+    ciphertext: parts.slice(2).join('|')
+  };
 }
 
 // ====== CLIPBOARD: lembrar apenas o último texto perguntado ======
@@ -2646,10 +2635,11 @@ function setupClipboardPasteAndButton() {
 
   const txtChave = document.getElementById('txtChave');
   const txtMsgEntrada = document.getElementById('txtMsgEntrada');
+  const btnPasteClipboard = document.getElementById('btnPasteClipboard');
 
   const applyInputValue = (el, value) => {
     if (!el) return;
-    el.value = value;
+    el.value = value || '';
     el.dispatchEvent(new Event('input', { bubbles: true }));
     el.dispatchEvent(new Event('change', { bubbles: true }));
   };
@@ -2674,24 +2664,22 @@ function setupClipboardPasteAndButton() {
     return '';
   };
 
-  if (isCifrarPage && txtChave) {
+  if (isCifrarPage && txtChave && !txtChave.dataset.cifreiPasteBound) {
+    txtChave.dataset.cifreiPasteBound = '1';
     txtChave.addEventListener('paste', function (event) {
       const clipboardText = getClipboardTextFromPasteEvent(event);
       const info = detectCifreiFromClipboard(clipboardText);
       if (!info) return;
 
       event.preventDefault();
-      event.stopPropagation();
+      event.stopImmediatePropagation();
 
       applyInputValue(txtChave, info.key || '');
       flashContainer(document.getElementById('divChave') || txtChave);
-    }, true);
+    });
   }
 
-  if (!isDecifrarPage) return;
-
-  const btnPasteClipboard = document.getElementById('btnPasteClipboard');
-  if (!btnPasteClipboard) return;
+  if (!isDecifrarPage || !btnPasteClipboard) return;
 
   const setButtonEnabled = (enabled) => {
     btnPasteClipboard.disabled = !enabled;
@@ -2702,11 +2690,24 @@ function setupClipboardPasteAndButton() {
   const enableButton = () => setButtonEnabled(true);
   setButtonEnabled(false);
 
-  btnPasteClipboard.addEventListener('click', async function () {
-    if (!navigator.clipboard || !navigator.clipboard.readText) return;
+  if (!btnPasteClipboard.dataset.cifreiClickBound) {
+    btnPasteClipboard.dataset.cifreiClickBound = '1';
+    btnPasteClipboard.addEventListener('click', async function (event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
 
-    try {
-      const text = await navigator.clipboard.readText();
+      let text = '';
+
+      try {
+        if (navigator.clipboard && typeof navigator.clipboard.readText === 'function') {
+          text = await navigator.clipboard.readText();
+        }
+      } catch (err) {
+        console.warn('[Cifrei] Falha ao ler clipboard pelo botão:', err);
+      }
+
       const info = detectCifreiFromClipboard(text);
       if (!info) return;
 
@@ -2714,19 +2715,26 @@ function setupClipboardPasteAndButton() {
       applyInputValue(txtMsgEntrada, info.ciphertext || '');
       flashContainer(document.getElementById('divChave') || txtChave);
       flashContainer(document.getElementById('divMsgEntrada') || txtMsgEntrada);
-    } catch (err) {
-      console.warn('[Cifrei] Falha ao ler clipboard pelo botão:', err);
-    }
-  });
+    });
+  }
 
   const radios = Array.from(document.querySelectorAll('input[name="origem-chave"]'));
   radios.forEach(radio => {
+    if (radio.dataset.cifreiEnablePasteBtnBound) return;
+    radio.dataset.cifreiEnablePasteBtnBound = '1';
     radio.addEventListener('change', enableButton);
     radio.addEventListener('click', enableButton);
   });
 
-  if (txtChave) txtChave.addEventListener('focus', enableButton);
-  if (txtMsgEntrada) txtMsgEntrada.addEventListener('focus', enableButton);
+  if (txtChave && !txtChave.dataset.cifreiEnablePasteBtnBound) {
+    txtChave.dataset.cifreiEnablePasteBtnBound = '1';
+    txtChave.addEventListener('focus', enableButton);
+  }
+
+  if (txtMsgEntrada && !txtMsgEntrada.dataset.cifreiEnablePasteBtnBound) {
+    txtMsgEntrada.dataset.cifreiEnablePasteBtnBound = '1';
+    txtMsgEntrada.addEventListener('focus', enableButton);
+  }
 }
 
 function setupPasswordGeneratorModal() {
