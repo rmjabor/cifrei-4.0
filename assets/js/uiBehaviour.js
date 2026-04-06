@@ -2665,60 +2665,93 @@ function initClipboardWatcherForPage() {
     return;
   }
 
-  let alreadyTriggered = false;
+  if (document.body && document.body.dataset.cifreiClipboardWatcherBound === '1') {
+    return;
+  }
 
-  async function handleUserGesture() {
-    if (alreadyTriggered) return;
-    alreadyTriggered = true;
+  if (document.body) {
+    document.body.dataset.cifreiClipboardWatcherBound = '1';
+  }
 
-    // Remove os listeners assim que disparar uma vez
-    document.removeEventListener('pointerdown', handleUserGesture);
-    document.removeEventListener('keydown', handleUserGesture);
+  let isReadingClipboard = false;
+  let watcherActive = true;
+  let lastAttemptAt = 0;
+
+  function detachWatcher() {
+    watcherActive = false;
+    document.removeEventListener('pointerup', handleUserGesture, true);
+    document.removeEventListener('click', handleUserGesture, true);
+    document.removeEventListener('keydown', handleUserGesture, true);
+  }
+
+  function pageAlreadyHasRelevantData() {
+    if (pageType === 'cifrar') {
+      const campoChave = document.getElementById('txtChave');
+      return !!(campoChave && campoChave.value && campoChave.value.trim() !== '');
+    }
+
+    if (pageType === 'decifrar') {
+      const campoChave = document.getElementById('txtChave');
+      const campoMsg = document.getElementById('txtMsgEntrada');
+      return !!(
+        campoChave && campoMsg &&
+        campoChave.value && campoChave.value.trim() !== '' &&
+        campoMsg.value && campoMsg.value.trim() !== ''
+      );
+    }
+
+    return false;
+  }
+
+  async function handleUserGesture(event) {
+    if (!watcherActive || isReadingClipboard) return;
+
+    const now = Date.now();
+    if (now - lastAttemptAt < 250) return;
+    lastAttemptAt = now;
+
+    if (pageAlreadyHasRelevantData()) {
+      detachWatcher();
+      return;
+    }
+
+    isReadingClipboard = true;
 
     try {
-      console.log('[Cifrei] Vou tentar ler o clipboard...');
+      console.log('[Cifrei] Tentando ler o clipboard após gesto do usuário...', event && event.type ? event.type : '(sem tipo)');
       const text = await navigator.clipboard.readText();
       console.log('[Cifrei] Texto lido do clipboard:', text);
 
-      if (!text || !text.trim()) return;
+      if (!text || !text.trim()) {
+        return;
+      }
 
       const lastAsked = getLastClipboardAsked();
       if (lastAsked && lastAsked === text) {
-        // Já perguntamos sobre esse texto enquanto ele estava no clipboard
+        detachWatcher();
         return;
       }
 
       const info = detectCifreiFromClipboard(text);
       if (!info) {
-        // Se o clipboard atual não é Cifrei, "zera" o último perguntado
         setLastClipboardAsked('');
         return;
       }
 
-      // Regras para não encher o saco se já tem dados preenchidos
-      if (pageType === 'cifrar') {
-        const campoChave = document.getElementById('txtChave');
-        if (!campoChave) return;
-
-        if (campoChave.value && campoChave.value.trim() !== '') {
-          // Usuário já tem uma chave, não vamos atrapalhar
-          setLastClipboardAsked(text);
-          return;
-        }
-      } else if (pageType === 'decifrar') {
-        const campoChave = document.getElementById('txtChave');
-        const campoMsg   = document.getElementById('txtMsgEntrada');
-        if (!campoChave || !campoMsg) return;
-
-        if (campoChave.value.trim() && campoMsg.value.trim()) {
-          setLastClipboardAsked(text);
-          return;
-        }
+      if (pageAlreadyHasRelevantData()) {
+        setLastClipboardAsked(text);
+        detachWatcher();
+        return;
       }
 
-      // Guarda contexto e abre o modal bonitinho
       const modalEl = document.getElementById('confirmaUsarCifra');
-      if (!modalEl) return;
+      if (!modalEl || !window.bootstrap || !bootstrap.Modal) {
+        console.warn('[Cifrei] Modal de confirmação do clipboard não encontrado. Aplicando diretamente.');
+        applyClipboardCifreiAction({ pageType, info, rawText: text });
+        setLastClipboardAsked(text);
+        detachWatcher();
+        return;
+      }
 
       cifreiClipboardPendingAction = {
         pageType,
@@ -2728,15 +2761,18 @@ function initClipboardWatcherForPage() {
 
       const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
       bsModal.show();
-
+      detachWatcher();
     } catch (err) {
       console.warn('[Cifrei] Não foi possível ler a área de transferência:', err);
+    } finally {
+      isReadingClipboard = false;
     }
   }
 
-  // Aguarda o primeiro gesto do usuário na página
-  document.addEventListener('pointerdown', handleUserGesture);
-  document.addEventListener('keydown', handleUserGesture);
+  // Alguns navegadores só liberam clipboard em click; outros aceitam pointerup/keydown.
+  document.addEventListener('pointerup', handleUserGesture, true);
+  document.addEventListener('click', handleUserGesture, true);
+  document.addEventListener('keydown', handleUserGesture, true);
 }
 
 function setupPasswordGeneratorModal() {
