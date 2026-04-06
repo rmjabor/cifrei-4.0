@@ -2431,33 +2431,18 @@ function isPlausibleCifreiCiphertext(str) {
     }
   }
 
+  // Formato compacto atual: payload Base64URL com versão + salt + iv + ciphertext
   if (!/^[A-Za-z0-9_-]+$/.test(candidate)) return false;
 
   try {
-    if (typeof tryParseOptimizedCode === 'function') {
-      tryParseOptimizedCode(base64UrlToBytes(candidate));
-      return true;
-    }
-
-    if (typeof tryParseLegacyArgon2Code === 'function') {
-      try {
-        tryParseLegacyArgon2Code(base64UrlToBytes(candidate));
-        return true;
-      } catch (e) {}
-    }
-
-    if (typeof parseEncryptedCode === 'function') {
-      parseEncryptedCode(candidate);
+    if (typeof tryParseCompactCode === 'function') {
+      tryParseCompactCode(candidate);
       return true;
     }
 
     const payload = base64UrlToBytes(candidate);
     const minimumLength = 1 + 16 + 12 + 16;
-    return (
-      payload &&
-      payload.length >= minimumLength &&
-      (payload[0] === 5 || payload[0] === 4 || payload[0] === 1)
-    );
+    return payload && payload.length >= minimumLength && payload[0] === 1;
   } catch (e) {
     return false;
   }
@@ -2661,19 +2646,49 @@ function setupClipboardPasteAndButton() {
 
   const txtChave = document.getElementById('txtChave');
   const txtMsgEntrada = document.getElementById('txtMsgEntrada');
-  let suppressInputFallback = false;
+  let applyingClipboardTransform = false;
 
   const applyInputValue = (el, value) => {
     if (!el) return;
-    el.value = value;
+    const nextValue = String(value || '');
+
+    el.value = nextValue;
+    if (Object.prototype.hasOwnProperty.call(el, 'defaultValue')) {
+      el.defaultValue = nextValue;
+    }
+    if ('textContent' in el && el.tagName === 'TEXTAREA') {
+      el.textContent = nextValue;
+    }
+
     el.dispatchEvent(new Event('input', { bubbles: true }));
     el.dispatchEvent(new Event('change', { bubbles: true }));
+  };
+
+  const reinforceTextareaValue = (el, value) => {
+    if (!el) return;
+    const nextValue = String(value || '');
+
+    const reapply = () => {
+      if (el.value === nextValue) return;
+      el.value = nextValue;
+      if (Object.prototype.hasOwnProperty.call(el, 'defaultValue')) {
+        el.defaultValue = nextValue;
+      }
+      if ('textContent' in el && el.tagName === 'TEXTAREA') {
+        el.textContent = nextValue;
+      }
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+
+    requestAnimationFrame(reapply);
+    setTimeout(reapply, 30);
   };
 
   const applyDetectedCipherToPage = (info) => {
     if (!info) return;
 
-    suppressInputFallback = true;
+    applyingClipboardTransform = true;
     try {
       if (isCifrarPage) {
         applyInputValue(txtChave, info.key || '');
@@ -2684,29 +2699,78 @@ function setupClipboardPasteAndButton() {
       if (isDecifrarPage) {
         applyInputValue(txtChave, info.key || '');
         applyInputValue(txtMsgEntrada, info.ciphertext || '');
+        reinforceTextareaValue(txtMsgEntrada, info.ciphertext || '');
         flashContainer(document.getElementById('divChave') || txtChave);
         flashContainer(document.getElementById('divMsgEntrada') || txtMsgEntrada);
       }
     } finally {
       setTimeout(() => {
-        suppressInputFallback = false;
-      }, 0);
+        applyingClipboardTransform = false;
+      }, 60);
     }
   };
 
-  const isSupportedTarget = (target) => (
-    (isCifrarPage && target === txtChave) ||
-    (isDecifrarPage && (target === txtChave || target === txtMsgEntrada))
-  );
+  const getClipboardTextFromPasteEvent = async (event) => {
+    try {
+      if (event && event.clipboardData && typeof event.clipboardData.getData === 'function') {
+        const text = event.clipboardData.getData('text/plain');
+        if (text) return text;
+      }
+    } catch (err) {
+      console.warn('[Cifrei] clipboardData indisponível no paste:', err);
+    }
 
-  const handlePaste = (event) => {
+    try {
+      if (window.clipboardData && typeof window.clipboardData.getData === 'function') {
+        const text = window.clipboardData.getData('Text');
+        if (text) return text;
+      }
+    } catch (err) {
+      console.warn('[Cifrei] window.clipboardData indisponível:', err);
+    }
+
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.readText === 'function') {
+        return await navigator.clipboard.readText();
+      }
+    } catch (err) {
+      console.warn('[Cifrei] navigator.clipboard.readText falhou no paste:', err);
+    }
+
+    return '';
+  };
+
+  const handlePaste = async (event) => {
     const target = event.target;
-    if (!isSupportedTarget(target)) return;
+    const targetIsSupported = (isCifrarPage && target === txtChave) || (isDecifrarPage && (target === txtChave || target === txtMsgEntrada));
+    if (!targetIsSupported) return;
+
+    const clipboardText = await getClipboardTextFromPasteEvent(event);
+    const info = detectCifreiFromClipboard(clipboardText);
+    if (!info) return;
+
+    event.preventDefault();
+    if (typeof event.stopImmediatePropagation === 'function') {
+      event.stopImmediatePropagation();
+    } else {
+      event.stopPropagation();
+    }
+
+    requestAnimationFrame(() => {
+      applyDetectedCipherToPage(info);
+    });
+  };
+
+  const handleBeforeInput = async (event) => {
+    const target = event.target;
+    const targetIsSupported = (isCifrarPage && target === txtChave) || (isDecifrarPage && (target === txtChave || target === txtMsgEntrada));
+    if (!targetIsSupported) return;
+    if (event.inputType !== 'insertFromPaste') return;
 
     let clipboardText = '';
     try {
-      if (event.clipboardData && typeof event.clipboardData.getData === 'function') {
-        clipboardText = event.clipboardData.getData('text/plain') || '';
+      if (navigator.clipboard && typeof navigator.clipboard.readText === 'function') {
+        clipboardText = await navigator.clipboard.readText();
       }
     } catch (err) {
       clipboardText = '';
@@ -2716,15 +2780,17 @@ function setupClipboardPasteAndButton() {
     if (!info) return;
 
     event.preventDefault();
-    event.stopPropagation();
-    applyDetectedCipherToPage(info);
+    requestAnimationFrame(() => {
+      applyDetectedCipherToPage(info);
+    });
   };
 
   const handleInputFallback = (event) => {
-    if (suppressInputFallback) return;
+    if (applyingClipboardTransform) return;
 
     const target = event.target;
-    if (!isSupportedTarget(target)) return;
+    const targetIsSupported = (isCifrarPage && target === txtChave) || (isDecifrarPage && (target === txtChave || target === txtMsgEntrada));
+    if (!targetIsSupported) return;
 
     const currentValue = String(target.value || '').trim();
     if (!currentValue || currentValue.indexOf('|') === -1) return;
@@ -2732,16 +2798,20 @@ function setupClipboardPasteAndButton() {
     const info = detectCifreiFromClipboard(currentValue);
     if (!info) return;
 
-    applyDetectedCipherToPage(info);
+    requestAnimationFrame(() => {
+      applyDetectedCipherToPage(info);
+    });
   };
 
   if (txtChave) {
     txtChave.addEventListener('paste', handlePaste, true);
+    txtChave.addEventListener('beforeinput', handleBeforeInput, true);
     txtChave.addEventListener('input', handleInputFallback, true);
   }
 
   if (isDecifrarPage && txtMsgEntrada) {
     txtMsgEntrada.addEventListener('paste', handlePaste, true);
+    txtMsgEntrada.addEventListener('beforeinput', handleBeforeInput, true);
     txtMsgEntrada.addEventListener('input', handleInputFallback, true);
   }
 
@@ -2826,8 +2896,6 @@ function setupClipboardPasteAndButton() {
 
   if (txtChave) txtChave.addEventListener('focus', refreshClipboardButtonState);
   if (txtMsgEntrada) txtMsgEntrada.addEventListener('focus', refreshClipboardButtonState);
-  if (txtChave) txtChave.addEventListener('click', refreshClipboardButtonState);
-  if (txtMsgEntrada) txtMsgEntrada.addEventListener('click', refreshClipboardButtonState);
   window.addEventListener('focus', refreshClipboardButtonState);
   document.addEventListener('visibilitychange', function () {
     if (!document.hidden) refreshClipboardButtonState();
