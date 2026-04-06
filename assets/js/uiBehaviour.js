@@ -2455,17 +2455,25 @@ function detectCifreiFromClipboard(rawText) {
   const text = String(rawText).trim();
   if (!text) return null;
 
-  const parts = text.split('|');
-  if (parts.length < 3) return null;
+  const firstPipe = text.indexOf('|');
+  if (firstPipe < 0) return null;
 
-  if ((parts[0] || '').trim().toUpperCase() !== 'CIFREI') {
-    return null;
-  }
+  const prefix = text.slice(0, firstPipe).trim();
+  if (prefix.toLowerCase() !== 'cifrei') return null;
+
+  const afterPrefix = text.slice(firstPipe + 1);
+  const secondPipe = afterPrefix.indexOf('|');
+  if (secondPipe < 0) return null;
+
+  const key = afterPrefix.slice(0, secondPipe);
+  const ciphertext = afterPrefix.slice(secondPipe + 1);
+
+  if (!key || !ciphertext) return null;
 
   return {
     type: 'cifra-completa',
-    key: parts[1] || '',
-    ciphertext: parts.slice(2).join('|')
+    key,
+    ciphertext
   };
 }
 
@@ -2687,7 +2695,22 @@ function setupClipboardPasteAndButton() {
     btnPasteClipboard.style.cursor = enabled ? 'pointer' : 'not-allowed';
   };
 
-  const enableButton = () => setButtonEnabled(true);
+  const refreshPasteButtonState = async () => {
+    let enabled = false;
+
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.readText === 'function') {
+        const clipboardText = await navigator.clipboard.readText();
+        enabled = !!detectCifreiFromClipboard(clipboardText);
+      }
+    } catch (err) {
+      enabled = false;
+      console.warn('[Cifrei] Falha ao verificar clipboard para habilitar o botão:', err);
+    }
+
+    setButtonEnabled(enabled);
+  };
+
   setButtonEnabled(false);
 
   if (!btnPasteClipboard.dataset.cifreiClickBound) {
@@ -2722,18 +2745,18 @@ function setupClipboardPasteAndButton() {
   radios.forEach(radio => {
     if (radio.dataset.cifreiEnablePasteBtnBound) return;
     radio.dataset.cifreiEnablePasteBtnBound = '1';
-    radio.addEventListener('change', enableButton);
-    radio.addEventListener('click', enableButton);
+    radio.addEventListener('change', refreshPasteButtonState);
+    radio.addEventListener('click', refreshPasteButtonState);
   });
 
   if (txtChave && !txtChave.dataset.cifreiEnablePasteBtnBound) {
     txtChave.dataset.cifreiEnablePasteBtnBound = '1';
-    txtChave.addEventListener('focus', enableButton);
+    txtChave.addEventListener('focus', refreshPasteButtonState);
   }
 
   if (txtMsgEntrada && !txtMsgEntrada.dataset.cifreiEnablePasteBtnBound) {
     txtMsgEntrada.dataset.cifreiEnablePasteBtnBound = '1';
-    txtMsgEntrada.addEventListener('focus', enableButton);
+    txtMsgEntrada.addEventListener('focus', refreshPasteButtonState);
   }
 }
 
