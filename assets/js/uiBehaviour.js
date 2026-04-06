@@ -2455,25 +2455,17 @@ function detectCifreiFromClipboard(rawText) {
   const text = String(rawText).trim();
   if (!text) return null;
 
-  const firstPipe = text.indexOf('|');
-  if (firstPipe < 0) return null;
+  const parts = text.split('|');
+  if (parts.length < 3) return null;
 
-  const prefix = text.slice(0, firstPipe).trim();
-  if (prefix.toLowerCase() !== 'cifrei') return null;
-
-  const afterPrefix = text.slice(firstPipe + 1);
-  const secondPipe = afterPrefix.indexOf('|');
-  if (secondPipe < 0) return null;
-
-  const key = afterPrefix.slice(0, secondPipe);
-  const ciphertext = afterPrefix.slice(secondPipe + 1);
-
-  if (!key || !ciphertext) return null;
+  if ((parts[0] || '').trim().toUpperCase() !== 'CIFREI') {
+    return null;
+  }
 
   return {
     type: 'cifra-completa',
-    key,
-    ciphertext
+    key: parts[1] || '',
+    ciphertext: parts.slice(2).join('|')
   };
 }
 
@@ -2674,16 +2666,36 @@ function setupClipboardPasteAndButton() {
 
   if (isCifrarPage && txtChave && !txtChave.dataset.cifreiPasteBound) {
     txtChave.dataset.cifreiPasteBound = '1';
-    txtChave.addEventListener('paste', function (event) {
-      const clipboardText = getClipboardTextFromPasteEvent(event);
-      const info = detectCifreiFromClipboard(clipboardText);
-      if (!info) return;
 
-      event.preventDefault();
-      event.stopImmediatePropagation();
+    const extractCifreiInfoFromText = (raw) => {
+      const text = String(raw || '').trim();
+      if (!/^cifrei\|/i.test(text)) return null;
+      return detectCifreiFromClipboard(text);
+    };
 
+    const handleCifrarClipboardText = (raw) => {
+      const info = extractCifreiInfoFromText(raw);
+      if (!info || !info.key) return false;
       applyInputValue(txtChave, info.key || '');
       flashContainer(document.getElementById('divChave') || txtChave);
+      return true;
+    };
+
+    txtChave.addEventListener('paste', function (event) {
+      const clipboardText = getClipboardTextFromPasteEvent(event);
+      if (!handleCifrarClipboardText(clipboardText)) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      if (typeof event.stopImmediatePropagation === 'function') {
+        event.stopImmediatePropagation();
+      }
+    }, true);
+
+    txtChave.addEventListener('input', function () {
+      const currentValue = txtChave.value || '';
+      if (!/^cifrei\|/i.test(currentValue)) return;
+      handleCifrarClipboardText(currentValue);
     });
   }
 
@@ -2695,22 +2707,7 @@ function setupClipboardPasteAndButton() {
     btnPasteClipboard.style.cursor = enabled ? 'pointer' : 'not-allowed';
   };
 
-  const refreshPasteButtonState = async () => {
-    let enabled = false;
-
-    try {
-      if (navigator.clipboard && typeof navigator.clipboard.readText === 'function') {
-        const clipboardText = await navigator.clipboard.readText();
-        enabled = !!detectCifreiFromClipboard(clipboardText);
-      }
-    } catch (err) {
-      enabled = false;
-      console.warn('[Cifrei] Falha ao verificar clipboard para habilitar o botão:', err);
-    }
-
-    setButtonEnabled(enabled);
-  };
-
+  const enableButton = () => setButtonEnabled(true);
   setButtonEnabled(false);
 
   if (!btnPasteClipboard.dataset.cifreiClickBound) {
@@ -2745,18 +2742,18 @@ function setupClipboardPasteAndButton() {
   radios.forEach(radio => {
     if (radio.dataset.cifreiEnablePasteBtnBound) return;
     radio.dataset.cifreiEnablePasteBtnBound = '1';
-    radio.addEventListener('change', refreshPasteButtonState);
-    radio.addEventListener('click', refreshPasteButtonState);
+    radio.addEventListener('change', enableButton);
+    radio.addEventListener('click', enableButton);
   });
 
   if (txtChave && !txtChave.dataset.cifreiEnablePasteBtnBound) {
     txtChave.dataset.cifreiEnablePasteBtnBound = '1';
-    txtChave.addEventListener('focus', refreshPasteButtonState);
+    txtChave.addEventListener('focus', enableButton);
   }
 
   if (txtMsgEntrada && !txtMsgEntrada.dataset.cifreiEnablePasteBtnBound) {
     txtMsgEntrada.dataset.cifreiEnablePasteBtnBound = '1';
-    txtMsgEntrada.addEventListener('focus', refreshPasteButtonState);
+    txtMsgEntrada.addEventListener('focus', enableButton);
   }
 }
 
