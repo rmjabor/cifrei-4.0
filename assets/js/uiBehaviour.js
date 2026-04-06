@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
   safeInit('setupEditarCifraPage', setupEditarCifraPage);
   safeInit('setupQrDownloadButton', setupQrDownloadButton);
   safeInit('setupClipboardModal', setupClipboardModal);
-  safeInit('initClipboardWatcherForPage', initClipboardWatcherForPage);
+  safeInit('setupClipboardPasteAndButton', setupClipboardPasteAndButton);
   safeInit('setupPasswordGeneratorModal', setupPasswordGeneratorModal);
   safeInit('setupCifragemPageBottom', setupCifragemPageBottom);
   safeInit('setupMenuFlutuante', setupMenuFlutuante);
@@ -2296,7 +2296,7 @@ function handleQrDecoded(qrText) {
         return;
     }
 
-    const partes = String(qrText).trim().split('|');
+    const partes = qrText.split('|');
     // Esperado: ["CIFREI", "<chave>", "<código opcional>"]
     if (partes.length < 2) {
         console.warn('[Cifrei] Estrutura do QR inesperada:', partes);
@@ -2448,48 +2448,36 @@ function isPlausibleCifreiCiphertext(str) {
   }
 }
 
-function parseCifreiClipboardPayload(rawText) {
+/**
+ * Detecta se o texto do clipboard contém:
+ * - uma chave Cifrei pura (8 a 25 chars Base64URL)
+ * - ou um payload CIFREI|<key> ou CIFREI|<key>|<ciphertext>
+ *
+ * Retorna:
+ *   null se não for nada Cifrei
+ *   { type: 'chave' | 'cifra-completa', key, ciphertext }
+ */
+function detectCifreiFromClipboard(rawText) {
   if (!rawText) return null;
 
   const text = String(rawText).trim();
   if (!text) return null;
 
-  const match = text.match(/^cifrei\|([^|]+)(?:\|(.*))?$/is);
-  if (!match) return null;
+  const parts = text.split('|');
+  if (parts.length < 3) return null;
 
-  const key = String(match[1] || '').trim();
-  const ciphertext = typeof match[2] === 'string' ? match[2].trim() : '';
-
-  if (!isCifreiKey(key)) return null;
-
-  return { key, ciphertext, rawText: text };
-}
-
-/**
- * Detecta apenas uma cifra completa do Cifrei no clipboard.
- *
- * Formato aceito:
- *   Cifrei|<key>|<ciphertext>
- *
- * O prefixo é aceito em qualquer combinação de maiúsculas/minúsculas.
- */
-function detectCifreiFromClipboard(rawText) {
-  const parsed = parseCifreiClipboardPayload(rawText);
-  if (!parsed) return null;
-
-  if (!parsed.ciphertext) {
+  if ((parts[0] || '').trim().toUpperCase() !== 'CIFREI') {
     return null;
   }
 
-  if (!isPlausibleCifreiCiphertext(parsed.ciphertext)) {
+  const key = (parts[1] || '').trim();
+  const ciphertext = parts.slice(2).join('|').trim();
+
+  if (!isCifreiKey(key) || !ciphertext || !isPlausibleCifreiCiphertext(ciphertext)) {
     return null;
   }
 
-  return {
-    type: 'cifra-completa',
-    key: parsed.key,
-    ciphertext: parsed.ciphertext
-  };
+  return { type: 'cifra-completa', key, ciphertext };
 }
 
 // ====== CLIPBOARD: lembrar apenas o último texto perguntado ======
@@ -2606,9 +2594,11 @@ function applyClipboardCifreiAction(action) {
     ciphertext = info.ciphertext.trim();
   } else if (typeof rawText === 'string') {
     const text = rawText.trim();
-    const parsed = parseCifreiClipboardPayload(text);
-    if (parsed && parsed.ciphertext) {
-      ciphertext = parsed.ciphertext;
+    if (text.startsWith('CIFREI|')) {
+      const parts = text.split('|');
+      if (parts.length >= 3) {
+        ciphertext = parts.slice(2).join('|').trim();
+      }
     }
   }
 
@@ -2641,171 +2631,147 @@ function applyClipboardCifreiAction(action) {
 
 // ====== CLIPBOARD: integração com cifrar.html e decifrar.html ======
 
-function setClipboardPasteButtonState(button, isEnabled) {
-  if (!button) return;
-
-  button.disabled = !isEnabled;
-  button.setAttribute('aria-disabled', isEnabled ? 'false' : 'true');
-  button.style.opacity = isEnabled ? '1' : '0.6';
-  button.style.cursor = isEnabled ? 'pointer' : 'not-allowed';
-}
-
-async function tryReadClipboardText() {
-  if (!navigator.clipboard || typeof navigator.clipboard.readText !== 'function') {
-    return '';
-  }
-
-  try {
-    return await navigator.clipboard.readText();
-  } catch (err) {
-    console.warn('[Cifrei] Não foi possível ler a área de transferência:', err);
-    return '';
-  }
-}
-
-function fillCifrarKeyFromClipboardInfo(info) {
-  const campoChave = document.getElementById('txtChave');
-  if (!campoChave || !info || !info.key) return false;
-
-  campoChave.value = info.key;
-  campoChave.dispatchEvent(new Event('input', { bubbles: true }));
-  campoChave.dispatchEvent(new Event('change', { bubbles: true }));
-  flashContainer(campoChave);
-  return true;
-}
-
-function fillDecifrarFieldsFromClipboardInfo(info) {
-  const campoChave = document.getElementById('txtChave');
-  const campoMsg = document.getElementById('txtMsgEntrada');
-  if (!campoChave || !campoMsg || !info || !info.key || !info.ciphertext) return false;
-
-  campoChave.value = info.key;
-  campoMsg.value = info.ciphertext;
-  campoChave.dispatchEvent(new Event('input', { bubbles: true }));
-  campoChave.dispatchEvent(new Event('change', { bubbles: true }));
-  campoMsg.dispatchEvent(new Event('input', { bubbles: true }));
-  campoMsg.dispatchEvent(new Event('change', { bubbles: true }));
-  flashContainer(campoChave);
-  flashContainer(campoMsg);
-  return true;
-}
-
 function initClipboardWatcherForPage() {
+  // Fluxo global antigo neutralizado. O clipboard agora é tratado por:
+  // - evento de colar (Ctrl+V / colar)
+  // - botão explícito na página decifrar
+}
+
+function setupClipboardPasteAndButton() {
   const path = (window.location && window.location.pathname) ? window.location.pathname : '';
+  const isCifrarPage = path.endsWith('cifrar.html') || !!document.getElementById('btnCifrar');
+  const isDecifrarPage = path.endsWith('decifrar.html') || !!document.getElementById('btnDecifrar');
 
-  let pageType = null;
+  if (!isCifrarPage && !isDecifrarPage) return;
 
-  if (path.endsWith('cifrar.html')) {
-    pageType = 'cifrar';
-  } else if (path.endsWith('decifrar.html')) {
-    pageType = 'decifrar';
-  } else if (document.getElementById('btnCifrar')) {
-    pageType = 'cifrar';
-  } else if (document.getElementById('btnDecifrar')) {
-    pageType = 'decifrar';
-  }
+  const txtChave = document.getElementById('txtChave');
+  const txtMsgEntrada = document.getElementById('txtMsgEntrada');
 
-  if (!pageType) return;
+  const applyInputValue = (el, value) => {
+    if (!el) return;
+    el.value = value;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  };
 
-  if (document.body && document.body.dataset.cifreiClipboardWatcherBound === '1') {
-    return;
-  }
-
-  if (document.body) {
-    document.body.dataset.cifreiClipboardWatcherBound = '1';
-  }
-
-  if (pageType === 'cifrar') {
-    const campoChave = document.getElementById('txtChave');
-    if (!campoChave) return;
-
-    campoChave.addEventListener('paste', function (event) {
-      const pastedText = event.clipboardData && typeof event.clipboardData.getData === 'function'
-        ? event.clipboardData.getData('text/plain')
-        : '';
-      const info = detectCifreiFromClipboard(pastedText);
-
-      if (!info || !info.key) {
-        return;
-      }
-
-      event.preventDefault();
-      fillCifrarKeyFromClipboardInfo(info);
-    });
-
-    return;
-  }
-
-  const campoChave = document.getElementById('txtChave');
-  const campoMsg = document.getElementById('txtMsgEntrada');
-  const btnPasteClipboard = document.getElementById('btnPasteClipboard');
-  const radios = Array.from(document.querySelectorAll('input[name="origem-chave"]'));
-
-  if (!campoChave || !campoMsg) return;
-
-  function handleDecifrarPaste(event) {
-    const pastedText = event.clipboardData && typeof event.clipboardData.getData === 'function'
+  const handlePaste = (event) => {
+    const clipboardText = event.clipboardData && typeof event.clipboardData.getData === 'function'
       ? event.clipboardData.getData('text/plain')
       : '';
-    const info = detectCifreiFromClipboard(pastedText);
 
-    if (!info || !info.key || !info.ciphertext) {
+    const info = detectCifreiFromClipboard(clipboardText);
+    if (!info) return;
+
+    const target = event.target;
+
+    if (isCifrarPage) {
+      if (target !== txtChave) return;
+      event.preventDefault();
+      applyInputValue(txtChave, info.key || '');
+      flashContainer(document.getElementById('divChave') || txtChave);
       return;
     }
 
-    event.preventDefault();
-    fillDecifrarFieldsFromClipboardInfo(info);
-  }
+    if (isDecifrarPage) {
+      if (target !== txtChave && target !== txtMsgEntrada) return;
+      event.preventDefault();
+      applyInputValue(txtChave, info.key || '');
+      applyInputValue(txtMsgEntrada, info.ciphertext || '');
+      flashContainer(document.getElementById('divChave') || txtChave);
+      flashContainer(document.getElementById('divMsgEntrada') || txtMsgEntrada);
+    }
+  };
 
-  campoChave.addEventListener('paste', handleDecifrarPaste);
-  campoMsg.addEventListener('paste', handleDecifrarPaste);
+  if (txtChave) txtChave.addEventListener('paste', handlePaste);
+  if (isDecifrarPage && txtMsgEntrada) txtMsgEntrada.addEventListener('paste', handlePaste);
+
+  if (!isDecifrarPage) return;
+
+  let btnPasteClipboard = document.getElementById('btnPasteClipboard');
+  if (!btnPasteClipboard && txtMsgEntrada && txtMsgEntrada.parentElement) {
+    btnPasteClipboard = document.createElement('button');
+    btnPasteClipboard.type = 'button';
+    btnPasteClipboard.id = 'btnPasteClipboard';
+    btnPasteClipboard.className = 'btn btn-primary text-center rounded-3 btnPadrao';
+    btnPasteClipboard.textContent = 'Usar cifra do clipboard';
+    btnPasteClipboard.style.background = '#673f85';
+    btnPasteClipboard.style.borderStyle = 'none';
+    btnPasteClipboard.style.height = '45px';
+    btnPasteClipboard.style.paddingRight = '0px';
+    btnPasteClipboard.style.paddingLeft = '0px';
+    btnPasteClipboard.style.paddingTop = '4px';
+    btnPasteClipboard.style.paddingBottom = '0px';
+    btnPasteClipboard.style.boxShadow = '1px 1px 3px 0px #a7a7a7, 1px 1px 3px 0px #a7a7a7';
+    btnPasteClipboard.style.fontFamily = "'Open Sans', sans-serif";
+    btnPasteClipboard.style.fontSize = '14px';
+    btnPasteClipboard.style.marginTop = '15px';
+    btnPasteClipboard.style.marginRight = 'auto';
+    btnPasteClipboard.style.marginLeft = 'auto';
+    btnPasteClipboard.style.position = 'relative';
+    btnPasteClipboard.style.display = 'block';
+    btnPasteClipboard.style.overflow = 'hidden';
+    btnPasteClipboard.style.maxWidth = '570px';
+    btnPasteClipboard.style.fontWeight = 'bold';
+    txtMsgEntrada.parentElement.insertAdjacentElement('afterend', btnPasteClipboard);
+  }
 
   if (!btnPasteClipboard) return;
 
-  let isCheckingClipboardButton = false;
-  setClipboardPasteButtonState(btnPasteClipboard, false);
+  const setButtonEnabled = (enabled) => {
+    btnPasteClipboard.disabled = !enabled;
+    btnPasteClipboard.style.opacity = enabled ? '1' : '0.55';
+    btnPasteClipboard.style.cursor = enabled ? 'pointer' : 'not-allowed';
+  };
 
-  async function refreshPasteButtonState() {
-    if (isCheckingClipboardButton) return;
-    isCheckingClipboardButton = true;
-
-    try {
-      const text = await tryReadClipboardText();
-      const info = detectCifreiFromClipboard(text);
-      setClipboardPasteButtonState(btnPasteClipboard, !!(info && info.key && info.ciphertext));
-    } finally {
-      isCheckingClipboardButton = false;
-    }
-  }
-
-  btnPasteClipboard.addEventListener('click', async function (event) {
-    event.preventDefault();
-
-    const text = await tryReadClipboardText();
-    const info = detectCifreiFromClipboard(text);
-
-    if (!info || !info.key || !info.ciphertext) {
-      setClipboardPasteButtonState(btnPasteClipboard, false);
+  let checkCounter = 0;
+  const refreshClipboardButtonState = async () => {
+    const currentCheck = ++checkCounter;
+    if (!navigator.clipboard || !navigator.clipboard.readText) {
+      setButtonEnabled(false);
       return;
     }
-
-    fillDecifrarFieldsFromClipboardInfo(info);
-    setClipboardPasteButtonState(btnPasteClipboard, true);
-  });
-
-  radios.forEach(function (radio) {
-    radio.addEventListener('change', function () {
-      refreshPasteButtonState();
-    });
-  });
-
-  campoChave.addEventListener('focus', refreshPasteButtonState);
-  campoMsg.addEventListener('focus', refreshPasteButtonState);
-  window.addEventListener('focus', refreshPasteButtonState);
-  document.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'visible') {
-      refreshPasteButtonState();
+    try {
+      const text = await navigator.clipboard.readText();
+      if (currentCheck !== checkCounter) return;
+      setButtonEnabled(!!detectCifreiFromClipboard(text));
+    } catch (err) {
+      if (currentCheck !== checkCounter) return;
+      setButtonEnabled(false);
     }
+  };
+
+  setButtonEnabled(false);
+
+  btnPasteClipboard.addEventListener('click', async function () {
+    if (!navigator.clipboard || !navigator.clipboard.readText) return;
+    try {
+      const text = await navigator.clipboard.readText();
+      const info = detectCifreiFromClipboard(text);
+      if (!info) {
+        setButtonEnabled(false);
+        return;
+      }
+      applyInputValue(txtChave, info.key || '');
+      applyInputValue(txtMsgEntrada, info.ciphertext || '');
+      flashContainer(document.getElementById('divChave') || txtChave);
+      flashContainer(document.getElementById('divMsgEntrada') || txtMsgEntrada);
+      setButtonEnabled(true);
+    } catch (err) {
+      setButtonEnabled(false);
+    }
+  });
+
+  const radios = Array.from(document.querySelectorAll('input[name="origem-chave"]'));
+  radios.forEach(radio => {
+    radio.addEventListener('change', refreshClipboardButtonState);
+    radio.addEventListener('click', refreshClipboardButtonState);
+  });
+
+  if (txtChave) txtChave.addEventListener('focus', refreshClipboardButtonState);
+  if (txtMsgEntrada) txtMsgEntrada.addEventListener('focus', refreshClipboardButtonState);
+  window.addEventListener('focus', refreshClipboardButtonState);
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) refreshClipboardButtonState();
   });
 }
 
