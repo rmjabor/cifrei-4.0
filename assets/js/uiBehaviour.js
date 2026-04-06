@@ -2431,18 +2431,25 @@ function isPlausibleCifreiCiphertext(str) {
     }
   }
 
-  // Formato compacto atual: payload Base64URL com versão + salt + iv + ciphertext
+  // Formato compacto atual: payload Base64URL com header otimizado (v5)
+  // e compatibilidade com o formato anterior (v4).
   if (!/^[A-Za-z0-9_-]+$/.test(candidate)) return false;
 
   try {
-    if (typeof tryParseCompactCode === 'function') {
-      tryParseCompactCode(candidate);
+    if (typeof parseCode === 'function') {
+      parseCode(candidate);
       return true;
     }
 
     const payload = base64UrlToBytes(candidate);
     const minimumLength = 1 + 16 + 12 + 16;
-    return payload && payload.length >= minimumLength && payload[0] === 1;
+    if (!payload || payload.length < minimumLength) return false;
+
+    const firstByte = payload[0];
+    const compactVersion = (firstByte >> 4) & 0x0f;
+
+    // v5 otimizado guarda a versão no nibble alto; v4 legado começa com 0x04.
+    return compactVersion === 5 || firstByte === 4;
   } catch (e) {
     return false;
   }
